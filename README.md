@@ -30,6 +30,7 @@ git submodule update --init --recursive
 3. Install dependencies using Pipenv:
 ```bash
 pipenv install
+pip install -e .
 ```
 
 4. Download the Hubert model (`hubert_base.pt`) from [Hugging Face](https://huggingface.co/lj1995/VoiceConversionWebUI/tree/main) and place it in the `models` directory:

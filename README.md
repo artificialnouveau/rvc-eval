@@ -18,7 +18,7 @@ RVC Eval Simplified (rvc-eval) is an appropriate name for this project as it hig
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/esnya/rvc-eval.git
+git clone https://github.com/artificialnouveau/rvc-eval.git
 ```
 
 2. Initialize and update the RVC submodule in the `rvc` directory:
@@ -29,16 +29,10 @@ git submodule update --init --recursive
 
 3. Install dependencies using Pipenv:
 ```bash
-pipenv install
 pip install -e .
 ```
 
 4. Download the Hubert model (`hubert_base.pt`) from [Hugging Face](https://huggingface.co/lj1995/VoiceConversionWebUI/tree/main) and place it in the `models` directory:
-
-5. Activate the Pipenv environment:
-```bash
-pipenv shell
-```
 
 
 ## Usage
@@ -47,10 +41,15 @@ pipenv shell
 ```bash
 python -m rvc_eval.cli --list-audio-devices
 ```
-
+If you want to run using OSC:
 2. To run the voice conversion system (with the default `hubert_base.pt` model or specify a custom path with the `--hubert` option):
 ```
-python -m rvc_eval.cli --model path/to/your/model.pth --input-device-index 0 --output-device-index 1
+python -m rvc_eval.cli --model path/to/your/models/models.pth --input-file path/to/your/input.wav --output-file path/to/your/output.wav
+```
+
+If you want to run from the command line:
+2. To run the voice conversion system (with the default `hubert_base.pt` model or specify a custom path with the `--hubert` option):
+```
 python -m rvc_eval.cli --model path/to/your/models/models.pth --input-file path/to/your/input.wav --output-file path/to/your/output.wav
 ```
 

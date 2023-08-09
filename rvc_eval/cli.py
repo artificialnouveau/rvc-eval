@@ -26,24 +26,24 @@ def print_handler(address, *args):
 
 osc_args = {}
 
-def set_model(address, model_path):
-    global osc_args
-    osc_args["model"] = model_path
+osc_args = {}
 
-def set_input_file(address, input_path):
+def set_all_paths(address, *args):
     global osc_args
-    osc_args["input_file"] = input_path
+    try:
+        osc_args["model"] = args[0]
+        osc_args["input_file"] = args[1]
+        osc_args["output_file"] = args[2]
 
-def set_output_file(address, output_path):
-    global osc_args
-    osc_args["output_file"] = output_path
-
+        print("model: ", osc_args["model"])
+        print("input_file: ", osc_args["input_file"])
+        print("output_file: ", osc_args["output_file"])
+    except IndexError:
+        print("Incorrect number of arguments received. Expecting model_path, input_path, and output_path.")
 
 def run_osc_server(args):
     disp = Dispatcher()
-    disp.map("/max2py/model_path", set_model)
-    disp.map("/max2py/user_sound_address", set_input_file)
-    disp.map("/max2py/rvc_sound_address", set_output_file)
+    disp.map("/max2py", set_all_paths)  # One OSC address to set all paths
 
     server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)
     print(f"Serving on {server.server_address}")
@@ -52,9 +52,9 @@ def run_osc_server(args):
         server.handle_request()  # Handle requests one by one
 
         if all(value is not None for value in osc_args.values()):
-            args.model = osc_args.get("model", "").replace('"','')#osc_args["model"].str.replace('"','')
-            args.input_file = osc_args.get("input_file", "").replace('"','')#osc_args["input_file"].str.replace('"','')
-            args.output_file = osc_args.get("output_file", "").replace('"','')#osc_args["output_file"].str.replace('"','')
+            args.model = osc_args.get("model", "").replace('"','')
+            args.input_file = osc_args.get("input_file", "").replace('"','')
+            args.output_file = osc_args.get("output_file", "").replace('"','')
             main(args)
             break  # After processing, break the loop
     server.serve_forever()

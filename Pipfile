@@ -9,7 +9,6 @@ verify_ssl = true
 name = "downloadpytorch"
 
 [packages]
-pyaudio = "*"
 torch = "*"
 fairseq = "*"
 praat-parselmouth = "*"

@@ -181,7 +181,7 @@ def main(args):
     if args.use_osc:
         # Create a client to send OSC messages, targeting the remote host on port 5005
         sender = udp_client.SimpleUDPClient("127.0.0.1", 6666) #Remote: 192.168.2.110
-        sender.send_message("/py2max/gen_done", "done")
+        sender.send_message("/py2max/gen_done", args.output_file+" is done")
 
 parser = ArgumentParser()
 parser.add_argument("--use-osc", action="store_true", help="Run in OSC mode.")

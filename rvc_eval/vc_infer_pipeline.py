@@ -7,9 +7,9 @@ import pyworld
 import scipy.signal as signal
 import torch
 import torch.nn.functional as F
-
+from scipy.signal import resample
 from rvc_eval.config import Config
-
+from scipy.signal import resample_poly
 
 class VC(object):
     def __init__(self, tgt_sr, device, is_half, x_pad):
@@ -126,19 +126,19 @@ class VC(object):
 
         return audio1
 
-    def pipeline(
-        self,
-        model,
-        net_g,
-        sid,
-        audio,
-        f0_up_key,
-        f0_method,
-    ):
-        audio_pad = np.pad(audio, (self.t_pad, self.t_pad), mode="reflect")
 
+    def pipeline(self, model, net_g, sid, audio, f0_up_key, f0_method):
+        original_length = len(audio)
+        
+        # Resample from original rate to 16kHz
+        num_samples_16k = int(original_length * 16000 / 44100)
+        audio_16k = resample(audio, num_samples_16k)
+
+        # Pad the audio
+        audio_pad = np.pad(audio_16k, (self.t_pad, self.t_pad), mode="reflect")
         p_len = audio_pad.shape[0] // self.window
 
+        # Extract features
         sid = torch.tensor(sid, device=self.device).unsqueeze(0).long()
         pitch, pitchf = self.get_f0(audio_pad, p_len, f0_up_key, f0_method)
         pitch = torch.tensor(
@@ -150,6 +150,7 @@ class VC(object):
             dtype=torch.float16 if self.is_half else torch.float32,
         ).unsqueeze(0)
 
+        # Voice conversion
         vc_output = self.vc(
             model,
             net_g,
@@ -165,4 +166,7 @@ class VC(object):
             else vc_output[self.t_pad_tgt : -self.t_pad_tgt]
         )
 
-        return audio_output
+        # Resample output from 16kHz back to 44.1kHz
+        audio_output_resampled = resample(audio_output.numpy(), original_length)
+
+        return audio_output_resampled

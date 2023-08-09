@@ -156,7 +156,7 @@ if __name__ == "__main__":
     logger.setLevel(args.log_level)
 
     if args.use_osc:
-        time.sleep(100)
+        # time.sleep(100)
         run_osc_server(args)
     else:
         if not args.model or not args.input_file or not args.output_file:

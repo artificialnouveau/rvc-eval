@@ -42,8 +42,8 @@ def set_all_paths(address, args_string):
 
     try:
         osc_args["input_files"] = paths[0]  # Every 3rd item starting from index 0
-        osc_args["output_files"] = paths[1:2]  # Every 3rd item starting from index 1
-        osc_args["models"] = paths[3:4]  # Every 3rd item starting from index 2
+        osc_args["models"] = paths[1:3]  # Every 3rd item starting from index 1
+        osc_args["output_files"] = paths[4:6]  # Every 3rd item starting from index 2
 
         print("models: ", osc_args["models"])
         print("input_files: ", osc_args["input_files"])

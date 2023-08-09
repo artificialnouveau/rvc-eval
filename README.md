@@ -31,7 +31,9 @@ git submodule update --init --recursive
 ```bash
 conda create -n rvc-eval python=3.10 pip
 conda activate rvc-eval
-pip install -e .
+pip install -r requirements.txt
+
+ignore this line for now: pip install -e .
 ```
 
 4. Download the Hubert model (`hubert_base.pt`) from [Hugging Face](https://huggingface.co/lj1995/VoiceConversionWebUI/tree/main) and place it in the `models` directory:

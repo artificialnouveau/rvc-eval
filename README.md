@@ -37,6 +37,12 @@ pip install -r requirements.txt
 ignore this line for now: pip install -e .
 ```
 
+if pip install requirements fails, do the following
+```bash
+pip install openai-whisper 
+conda install -c conda-forge numpy=1.24 ffmpeg 
+```
+
 4. Download the Hubert model (`hubert_base.pt`) from [Hugging Face](https://huggingface.co/lj1995/VoiceConversionWebUI/tree/main) and place it in the `models` directory:
 
 5. Copy the file myspsolution.praat from

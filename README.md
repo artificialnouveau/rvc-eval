@@ -39,7 +39,7 @@ ignore this line for now: pip install -e .
 
 4. Download the Hubert model (`hubert_base.pt`) from [Hugging Face](https://huggingface.co/lj1995/VoiceConversionWebUI/tree/main) and place it in the `models` directory:
 
-5. After installing My-Voice-Analysis, copy the file myspsolution.praat from
+5. Copy the file myspsolution.praat from
 
                                       https://github.com/Shahabks/my-voice-analysis  
 

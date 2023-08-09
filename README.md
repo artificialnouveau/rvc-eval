@@ -37,18 +37,14 @@ pip install -e .
 
 ## Usage
 
-1. To list available audio devices:
+To run the voice conversion system (with the default `hubert_base.pt` model or specify a custom path with the `--hubert` option):
+
+1. To turn on the OSC receiver
 ```bash
-python -m rvc_eval.cli --list-audio-devices
-```
-If you want to run using OSC:
-2. To run the voice conversion system (with the default `hubert_base.pt` model or specify a custom path with the `--hubert` option):
-```
-python -m rvc_eval.cli --model path/to/your/models/models.pth --input-file path/to/your/input.wav --output-file path/to/your/output.wav
+python -m rvc_eval.cli
 ```
 
-If you want to run from the command line:
-2. To run the voice conversion system (with the default `hubert_base.pt` model or specify a custom path with the `--hubert` option):
+2. If you want to run from the command line:
 ```
 python -m rvc_eval.cli --model path/to/your/models/models.pth --input-file path/to/your/input.wav --output-file path/to/your/output.wav
 ```

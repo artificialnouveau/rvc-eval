@@ -1,7 +1,8 @@
 from pythonosc import udp_client
-from pythonosc import dispatcher
+from pythonosc.dispatcher import Dispatcher
 from pythonosc import osc_server
 
+import time
 import os
 import sys
 from argparse import ArgumentParser
@@ -24,18 +25,24 @@ def print_handler(address, *args):
     print(f"Received message from {address}: {args}")
 
 def receive_osc(unused_addr, model, input_file_path, output_file_path):
-    global args
     args.model = model
     args.input_file = input_file_path
     args.output_file = output_file_path
     main(args)
 
-dispatcher = dispatcher.Dispatcher()
-dispatcher.map("/OSC_2py", print_handler)
+def run_osc_server():
+    disp = Dispatcher()
+    disp.map("/max2py", print_handler)
+    server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)#192.168.2.110
+    print(f"Serving on {server.server_address}")
+    server.serve_forever()
 
-server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), dispatcher)
-print("Serving on {}".format(server.server_address))
-server.serve_forever()
+# dispatcher = dispatcher.Dispatcher()
+# dispatcher.map("/max2py", print_handler)
+# server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), dispatcher)
+# print("Serving on {}".format(server.server_address))
+# server.serve_forever()
+
 
 def resample_audio(audio, original_sr, target_sr):
     from math import gcd
@@ -106,14 +113,15 @@ def main(args):
 
     # Save the output
     sf.write(args.output_file, audio_output_full.astype('float32'), 44100)  # Save at 44.1kHz rate
-        
-    # Specify the IP address of the remote host
-    remote_ip = "192.168.2.110"  # Replace with the IP address of the remote host
+    
+    # Send OSC command only if --use-osc argument is provided
+    if args.use_osc:
+        # Specify the IP address of the remote host
+        remote_ip = "192.168.2.110"  # Replace with the IP address of the remote host
 
-    # Create a client to send OSC messages, targeting the remote host on port 5005
-    sender = udp_client.SimpleUDPClient(remote_ip, 6666)
-    # sender = udp_client.SimpleUDPClient("127.0.0.1", 6666)
-    sender.send_message("/OSC_2max", args.output_file)
+        # Create a client to send OSC messages, targeting the remote host on port 5005
+        sender = udp_client.SimpleUDPClient(remote_ip, 6666)
+        sender.send_message("/OSC_2max", args.output_file)
 
     # Send OSC command to Max to notify that file creation is complete
     # client = udp_client.SimpleUDPClient('127.0.0.1', 6448)  # Assuming Max is listening on port 6448 at localhost
@@ -121,23 +129,31 @@ def main(args):
 
 
 parser = ArgumentParser()
+parser.add_argument("--use-osc", action="store_true", help="Run in OSC mode.")
+parser.add_argument("-m", "--model", type=str, required=False, help="Path to model file")
+parser.add_argument("--input-file", type=str, required=False, help="Path to input audio file")
+parser.add_argument("--output-file", type=str, required=False, help="Path to save processed audio file")
 parser.add_argument("-l", "--log-level", type=str, default="WARNING")
 parser.add_argument(
     "-d", "--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu"
 )
-parser.add_argument("-m", "--model", type=str, required=True)
 parser.add_argument("--hubert", type=str, default="models/hubert_base.pt")
 parser.add_argument("--float", action="store_true")
 parser.add_argument("-q", "--quality", type=int, default=1)
 parser.add_argument("-k", "--f0-up-key", type=int, default=0)
 parser.add_argument("--f0-method", type=str, default="pm", choices=("pm", "harvest"))
-parser.add_argument("--input-file", type=str, required=True, help="Path to input audio file")
-parser.add_argument("--output-file", type=str, required=True, help="Path to save processed audio file")
 parser.add_argument("--buffer-size", type=int, default=1000, help="buffering size in ms")
 
 
 if __name__ == "__main__":
     args = parser.parse_args()
     logger.setLevel(args.log_level)
-    main(args)
+
+    if args.use_osc:
+        run_osc_server()
+    else:
+        if not args.model or not args.input_file or not args.output_file:
+            print("When not using OSC mode, -m/--model, --input-file, and --output-file are required.")
+            sys.exit(1)
+        main(args)
 

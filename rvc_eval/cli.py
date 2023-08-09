@@ -17,6 +17,9 @@ from tqdm import tqdm
 from rvc_eval.vc_infer_pipeline import VC
 from rvc_eval.model import load_hubert, load_net_g
 
+sys.path.append(os.path.dirname(__file__))
+from speech_analysis import analyze_audio
+
 sys.path.append(os.path.join(os.path.dirname(__file__), "../rvc/"))
 
 logger = getLogger(__name__)
@@ -34,20 +37,15 @@ def set_all_paths(address, args_string):
     global osc_args
     if args_string.startswith("'") and args_string.endswith("'"):
         args_string = args_string[1:-1]
-        
     if 'Macintosh HD:' in args_string:
-        args_string = args_string.replace('Macintosh HD:', '')
+        args_string = args_string.str.replace('Macintosh HD:')
         
     paths = args_string.split(", ")
 
     try:
-        single_input_path = paths[0]
-        
-        # Replicate it to match the length of the models list
-        osc_args["input_files"] = [single_input_path] * len(paths[4:6])
-        
-        osc_args["models"] = paths[1:3]  # Every 3rd item starting from index 1
-        osc_args["output_files"] = paths[4:6]  # Every 3rd item starting from index 2
+        osc_args["input_files"] = paths[0]  # Every 3rd item starting from index 0
+        osc_args["output_files"] = paths[1:3]  # Every 3rd item starting from index 1
+        osc_args["models"] = paths[4:6]  # Every 3rd item starting from index 2
 
         print("models: ", osc_args["models"])
         print("input_files: ", osc_args["input_files"])
@@ -181,18 +179,26 @@ parser.add_argument("-q", "--quality", type=int, default=1)
 parser.add_argument("-k", "--f0-up-key", type=int, default=0)
 parser.add_argument("--f0-method", type=str, default="pm", choices=("pm", "harvest"))
 parser.add_argument("--buffer-size", type=int, default=1000, help="buffering size in ms")
+parser.add_argument("--analyze", action="store_true", help="Analyze the input audio file.")
+
 
 
 if __name__ == "__main__":
     args = parser.parse_args()
     logger.setLevel(args.log_level)
 
+    if args.analyze:
+        if not args.input_file:
+            print("The --input-file option is required for analysis.")
+            sys.exit(1)
+        analyze_audio(args.input_file)
+
     if args.use_osc:
-        #time.sleep(100)
         run_osc_server(args)
     else:
         if not args.model or not args.input_file or not args.output_file:
             print("When not using OSC mode, -m/--model, --input-file, and --output-file are required.")
             sys.exit(1)
         main(args)
+
 

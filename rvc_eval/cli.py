@@ -52,9 +52,9 @@ def run_osc_server(args):
         server.handle_request()  # Handle requests one by one
 
         if all(value is not None for value in osc_args.values()):
-            args.model = osc_args["model"].str.replace('"','')
-            args.input_file = osc_args["input_file"].str.replace('"','')
-            args.output_file = osc_args["output_file"].str.replace('"','')
+            args.model = osc_args.get("model", "").replace('"','')#osc_args["model"].str.replace('"','')
+            args.input_file = osc_args.get("input_file", "").replace('"','')#osc_args["input_file"].str.replace('"','')
+            args.output_file = osc_args.get("output_file", "").replace('"','')#osc_args["output_file"].str.replace('"','')
             main(args)
             break  # After processing, break the loop
     server.serve_forever()

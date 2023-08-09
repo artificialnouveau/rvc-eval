@@ -37,12 +37,6 @@ def run_osc_server():
     print(f"Serving on {server.server_address}")
     server.serve_forever()
 
-# dispatcher = dispatcher.Dispatcher()
-# dispatcher.map("/max2py", print_handler)
-# server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), dispatcher)
-# print("Serving on {}".format(server.server_address))
-# server.serve_forever()
-
 
 def resample_audio(audio, original_sr, target_sr):
     from math import gcd
@@ -116,17 +110,9 @@ def main(args):
     
     # Send OSC command only if --use-osc argument is provided
     if args.use_osc:
-        # Specify the IP address of the remote host
-        remote_ip = "192.168.2.110"  # Replace with the IP address of the remote host
-
         # Create a client to send OSC messages, targeting the remote host on port 5005
-        sender = udp_client.SimpleUDPClient(remote_ip, 6666)
-        sender.send_message("/OSC_2max", args.output_file)
-
-    # Send OSC command to Max to notify that file creation is complete
-    # client = udp_client.SimpleUDPClient('127.0.0.1', 6448)  # Assuming Max is listening on port 6448 at localhost
-    # client.send_message("/fileComplete", args.output_file)  # Sending the path as a message for confirmation
-
+        sender = udp_client.SimpleUDPClient("192.168.2.110", 6666)
+        sender.send_message("/py2max", "done")
 
 parser = ArgumentParser()
 parser.add_argument("--use-osc", action="store_true", help="Run in OSC mode.")
@@ -150,6 +136,7 @@ if __name__ == "__main__":
     logger.setLevel(args.log_level)
 
     if args.use_osc:
+        time.sleep(100)
         run_osc_server()
     else:
         if not args.model or not args.input_file or not args.output_file:

@@ -35,7 +35,7 @@ def set_all_paths(address, args_string):
     if args_string.startswith("'") and args_string.endswith("'"):
         args_string = args_string[1:-1]
         
-    if args_string.contains('Macintosh HD:'):
+    if 'Macintosh HD:' in args_string:
         args_string = args_string.str.replace('Macintosh HD:', '')
         
     paths = args_string.split(", ")

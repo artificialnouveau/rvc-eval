@@ -132,11 +132,12 @@ def main(args):
 
     # Save the output
     sf.write(args.output_file, audio_output_full.astype('float32'), 44100)  # Save at 44.1kHz rate
+    print('Done with processing and I have now saved the file')
     
     # Send OSC command only if --use-osc argument is provided
     if args.use_osc:
         # Create a client to send OSC messages, targeting the remote host on port 5005
-        sender = udp_client.SimpleUDPClient("192.168.2.110", 6666)
+        sender = udp_client.SimpleUDPClient("127.0.0.1", 6666) #Remote: 192.168.2.110
         sender.send_message("/py2max/gen_done", "done")
 
 parser = ArgumentParser()

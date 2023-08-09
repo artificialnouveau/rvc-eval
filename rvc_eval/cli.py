@@ -91,20 +91,7 @@ def run_osc_server(args):
             main(args)
         break
     server.serve_forever()
-
-
-    # while True:
-    #     server.handle_request()  # Handle requests one by one
-
-    #     if all(value is not None for value in osc_args.values()):
-    #         args.model = osc_args.get("model", "").replace('"','')
-    #         args.input_file = osc_args.get("input_file", "").replace('"','')
-    #         args.output_file = osc_args.get("output_file", "").replace('"','')
-    #         main(args)
-    #         break  # After processing, break the loop
-    # server.serve_forever()
     
-
 
 def resample_audio(audio, original_sr, target_sr):
     from math import gcd

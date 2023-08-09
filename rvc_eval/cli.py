@@ -26,14 +26,17 @@ def print_handler(address, *args):
 
 osc_args = {}
 
-osc_args = {}
-
-def set_all_paths(address, *args):
+def set_all_paths(address, args_string):
     global osc_args
+    if args_string.startswith("'") and args_string.endswith("'"):
+        args_string = args_string[1:-1]
+
+    paths = args_string.split(", ")
+
     try:
-        osc_args["model"] = args[0]
-        osc_args["input_file"] = args[1]
-        osc_args["output_file"] = args[2]
+        osc_args["model"] = paths[0].strip()
+        osc_args["input_file"] = paths[1].strip()
+        osc_args["output_file"] = paths[2].strip()
 
         print("model: ", osc_args["model"])
         print("input_file: ", osc_args["input_file"])

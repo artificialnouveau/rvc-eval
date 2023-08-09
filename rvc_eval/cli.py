@@ -57,11 +57,11 @@ def set_all_paths(address, args_string):
         osc_args["output_files"] = output_files
         osc_args["models"] = models
 
-        print("models: ", osc_args["models"])
         print("input_files: ", osc_args["input_files"])
         print("output_files: ", osc_args["output_files"])
+        print("models: ", osc_args["models"])
     except IndexError:
-        print("Incorrect sequence of arguments received. Expecting model_path, input_path, and output_path in order.")
+        print("Incorrect sequence of arguments received. Expecting input_path, output_path, and model_path in order.")
 
 
 

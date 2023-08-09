@@ -51,7 +51,7 @@ python -m rvc_eval.cli --list-audio-devices
 2. To run the voice conversion system (with the default `hubert_base.pt` model or specify a custom path with the `--hubert` option):
 ```
 python -m rvc_eval.cli --model path/to/your/model.pth --input-device-index 0 --output-device-index 1
-python -m rvc_eval.cli --model C:\Users\AZhuparris\rvc-eval\models\gambino.pth --input-file path/to/your/input.wav --output-file path/to/your/output.wav
+python -m rvc_eval.cli --model path/to/your/models/models.pth --input-file path/to/your/input.wav --output-file path/to/your/output.wav
 ```
 
 ## Recommended Dependencies and Requirements

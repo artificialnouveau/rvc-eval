@@ -38,20 +38,32 @@ def set_all_paths(address, args_string):
     if args_string.startswith("'") and args_string.endswith("'"):
         args_string = args_string[1:-1]
     if 'Macintosh HD:' in args_string:
-        args_string = args_string.str.replace('Macintosh HD:')
+        args_string = args_string.replace('Macintosh HD:', '')
         
     paths = args_string.split(", ")
 
+    input_files = []
+    output_files = []
+    models = []
+
     try:
-        osc_args["input_files"] = paths[0]  # Every 3rd item starting from index 0
-        osc_args["output_files"] = paths[1:3]  # Every 3rd item starting from index 1
-        osc_args["models"] = paths[4:6]  # Every 3rd item starting from index 2
+        # Assuming order is: input1, output1, model1, input2, output2, model2, ...
+        for i in range(0, len(paths), 3):
+            input_files.append(paths[i])
+            output_files.append(paths[i + 1])
+            models.append(paths[i + 2])
+
+        osc_args["input_files"] = input_files
+        osc_args["output_files"] = output_files
+        osc_args["models"] = models
 
         print("models: ", osc_args["models"])
         print("input_files: ", osc_args["input_files"])
         print("output_files: ", osc_args["output_files"])
     except IndexError:
-        print("Incorrect number of arguments received. Expecting model_path, input_path, and output_path.")
+        print("Incorrect sequence of arguments received. Expecting model_path, input_path, and output_path in order.")
+
+
 
 
 def run_osc_server(args):

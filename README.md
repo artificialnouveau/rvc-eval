@@ -27,8 +27,10 @@ cd rvc-eval
 git submodule update --init --recursive
 ```
 
-3. Install dependencies using Pipenv:
+3. Install dependencies using Pip. rvc-eval only runs on python 3.10 so we need to create a separate conda environment
 ```bash
+conda create -n rvc-eval python=3.10 pip
+conda activate rvc-eval
 pip install -e .
 ```
 

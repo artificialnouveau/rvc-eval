@@ -43,6 +43,7 @@ To run the voice conversion system (with the default `hubert_base.pt` model or s
 
 1. To turn on the OSC receiver
 ```bash
+python -m rvc_eval.cli --use-osc
 python -m rvc_eval.cli
 ```
 

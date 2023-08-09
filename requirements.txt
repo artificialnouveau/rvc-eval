@@ -1,0 +1,69 @@
+antlr4-python3-runtime==4.8
+appdirs==1.4.4
+audioread==3.0.0
+bitarray==2.8.1
+brotlipy==0.7.0
+certifi==2023.7.22
+cffi @ file:///C:/b/abs_49n3v2hyhr/croot/cffi_1670423218144/work
+charset-normalizer @ file:///tmp/build/80754af9/charset-normalizer_1630003229654/work
+colorama==0.4.6
+cryptography @ file:///C:/b/abs_b7d7drzbky/croot/cryptography_1673298763653/work
+Cython @ file:///D:/bld/cython_1689612546663/work
+decorator==5.1.1
+distlib @ file:///home/conda/feedstock_root/build_artifacts/distlib_1689598491484/work
+fairseq==0.12.2
+filelock @ file:///home/conda/feedstock_root/build_artifacts/filelock_1686612785345/work
+hydra-core==1.0.7
+idna @ file:///C:/b/abs_bdhbebrioa/croot/idna_1666125572046/work
+Jinja2 @ file:///C:/b/abs_7cdis66kl9/croot/jinja2_1666908141852/work
+joblib==1.3.1
+lazy_loader==0.3
+librosa==0.10.0.post2
+llvmlite==0.40.1
+lxml==4.9.3
+MarkupSafe @ file:///C:/ci/markupsafe_1654508036328/work
+mkl-fft==1.3.6
+mkl-random @ file:///C:/Users/dev-admin/mkl/mkl_random_1682977971003/work
+mkl-service==2.4.0
+mpmath @ file:///C:/b/abs_7833jrbiox/croot/mpmath_1690848321154/work
+msgpack==1.0.5
+networkx @ file:///C:/b/abs_e6gi1go5op/croot/networkx_1690562046966/work
+numba==0.57.1
+numpy==1.24.4
+omegaconf==2.0.6
+packaging @ file:///C:/b/abs_cfsup8ur87/croot/packaging_1671697442297/work
+Pillow==10.0.0
+pipenv @ file:///home/conda/feedstock_root/build_artifacts/pipenv_1690151524596/work
+platformdirs @ file:///home/conda/feedstock_root/build_artifacts/platformdirs_1690813113769/work
+pooch @ file:///tmp/build/80754af9/pooch_1623324770023/work
+portalocker==2.7.0
+praat-parselmouth==0.4.3
+PyAudio==0.2.11
+pycparser @ file:///tmp/build/80754af9/pycparser_1636541352034/work
+pydub @ file:///home/conda/feedstock_root/build_artifacts/pydub_1615612442567/work
+pyOpenSSL @ file:///C:/b/abs_08f38zyck4/croot/pyopenssl_1690225407403/work
+PySocks @ file:///C:/ci_310/pysocks_1642089375450/work
+python-osc==1.8.3
+pywin32==306
+pyworld @ file:///D:/bld/pyworld_1689974603370/work
+PyYAML==6.0.1
+regex==2023.6.3
+requests @ file:///C:/ci/requests_1657735340829/work
+resampy==0.4.2
+-e git+https://github.com/esnya/rvc-eval.git@677b42c26171fc8bb8dd5ddaf96b0dd3ce08c49f#egg=rvc_eval
+sacrebleu==2.3.1
+scikit-learn==1.3.0
+scipy==1.10.1
+soundfile==0.12.1
+soxr==0.3.5
+sympy @ file:///C:/b/abs_95fbf1z7n6/croot/sympy_1668202411612/work
+tabulate==0.9.0
+threadpoolctl==3.2.0
+torch==2.0.1
+torchaudio==2.0.2
+tqdm==4.65.1
+typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/typing_extensions_1688315532570/work
+urllib3 @ file:///C:/b/abs_9bcwxczrvm/croot/urllib3_1673575521331/work
+virtualenv @ file:///home/conda/feedstock_root/build_artifacts/virtualenv_1690273226872/work
+virtualenv-clone==0.5.4
+win-inet-pton @ file:///C:/ci_310/win_inet_pton_1642658466512/work

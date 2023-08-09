@@ -24,6 +24,8 @@ logger = getLogger(__name__)
 def print_handler(address, *args):
     print(f"Received message from {address}: {args}")
 
+osc_args = {}
+
 def set_model(address, model_path):
     global osc_args
     osc_args["model"] = model_path
@@ -50,9 +52,9 @@ def run_osc_server(args):
         server.handle_request()  # Handle requests one by one
 
         if all(value is not None for value in osc_args.values()):
-            args.model = osc_args["model"]
-            args.input_file = osc_args["input_file"]
-            args.output_file = osc_args["output_file"]
+            args.model = osc_args["model"].str.replace('"','')
+            args.input_file = osc_args["input_file"].str.replace('"','')
+            args.output_file = osc_args["output_file"].str.replace('"','')
             main(args)
             break  # After processing, break the loop
     server.serve_forever()
@@ -156,7 +158,7 @@ if __name__ == "__main__":
     logger.setLevel(args.log_level)
 
     if args.use_osc:
-        # time.sleep(100)
+        #time.sleep(100)
         run_osc_server(args)
     else:
         if not args.model or not args.input_file or not args.output_file:

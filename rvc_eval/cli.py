@@ -183,7 +183,7 @@ def main(args):
         sender = udp_client.SimpleUDPClient("127.0.0.1", 6666) #Remote: 192.168.2.110
         _out = args.output_file
         _mod = args.model
-        message = 'output file: '_out+' with '+_mod+' is done.'
+        message = 'output file: '+_out+' with '+_mod+' is done.'
         sender.send_message("/py2max/gen_done", message)
 
 parser = ArgumentParser()

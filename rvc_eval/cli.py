@@ -24,17 +24,37 @@ logger = getLogger(__name__)
 def print_handler(address, *args):
     print(f"Received message from {address}: {args}")
 
-def receive_osc(unused_addr, model, input_file_path, output_file_path):
-    args.model = model
-    args.input_file = input_file_path
-    args.output_file = output_file_path
-    main(args)
+def set_model(address, model_path):
+    global osc_args
+    osc_args["model"] = model_path
 
-def run_osc_server():
+def set_input_file(address, input_path):
+    global osc_args
+    osc_args["input_file"] = input_path
+
+def set_output_file(address, output_path):
+    global osc_args
+    osc_args["output_file"] = output_path
+
+
+def run_osc_server(args):
     disp = Dispatcher()
-    disp.map("/max2py", print_handler)
-    server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)#192.168.2.110
+    disp.map("/max2py/model_path", set_model)
+    disp.map("/max2py/user_sound_address", set_input_file)
+    disp.map("/max2py/rvc_sound_address", set_output_file)
+
+    server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)
     print(f"Serving on {server.server_address}")
+
+    while True:
+        server.handle_request()  # Handle requests one by one
+
+        if all(value is not None for value in osc_args.values()):
+            args.model = osc_args["model"]
+            args.input_file = osc_args["input_file"]
+            args.output_file = osc_args["output_file"]
+            main(args)
+            break  # After processing, break the loop
     server.serve_forever()
 
 
@@ -112,7 +132,7 @@ def main(args):
     if args.use_osc:
         # Create a client to send OSC messages, targeting the remote host on port 5005
         sender = udp_client.SimpleUDPClient("192.168.2.110", 6666)
-        sender.send_message("/py2max", "done")
+        sender.send_message("/py2max/gen_done", "done")
 
 parser = ArgumentParser()
 parser.add_argument("--use-osc", action="store_true", help="Run in OSC mode.")
@@ -137,7 +157,7 @@ if __name__ == "__main__":
 
     if args.use_osc:
         time.sleep(100)
-        run_osc_server()
+        run_osc_server(args)
     else:
         if not args.model or not args.input_file or not args.output_file:
             print("When not using OSC mode, -m/--model, --input-file, and --output-file are required.")

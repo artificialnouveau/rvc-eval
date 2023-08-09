@@ -33,7 +33,7 @@ osc_args = {
     "output_files": []
 }
 
-def set_all_paths(address, args_string):
+def set_all_paths(address, args_string, analyze=False):  # 'analyze' parameter
     global osc_args
     if args_string.startswith("'") and args_string.endswith("'"):
         args_string = args_string[1:-1]
@@ -47,11 +47,18 @@ def set_all_paths(address, args_string):
     models = []
 
     try:
-        # Assuming order is: input1, output1, model1, input2, output2, model2, ...
-        for i in range(0, len(paths), 3):
-            input_files.append(paths[i])
+        # The first path is always input
+        input_file = paths[0]
+        if analyze:
+            analyze_audio(input_file)
+        
+        # For the remaining paths, order is: model1, output1, model2, output2, ...
+        for i in range(1, len(paths)-1, 2):
+            models.append(paths[i])
             output_files.append(paths[i + 1])
-            models.append(paths[i + 2])
+
+        # Ensure the input_files list has the same length as models and output_files
+        input_files = [input_file] * len(models)
 
         osc_args["input_files"] = input_files
         osc_args["output_files"] = output_files
@@ -61,7 +68,7 @@ def set_all_paths(address, args_string):
         print("output_files: ", osc_args["output_files"])
         print("models: ", osc_args["models"])
     except IndexError:
-        print("Incorrect sequence of arguments received. Expecting input_path, output_path, and model_path in order.")
+        print("Incorrect sequence of arguments received. Expecting input_path, followed by alternating model_path and output_path.")
 
 
 

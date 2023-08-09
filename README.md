@@ -63,6 +63,11 @@ python -m rvc_eval.cli
 python -m rvc_eval.cli --model path/to/your/models/models.pth --input-file path/to/your/input.wav --output-file path/to/your/output.wav
 ```
 
+3. If you want to include the speech analysis just add --analyze:
+```
+python -m rvc_eval.cli --model path/to/your/models/models.pth --input-file path/to/your/input.wav --output-file path/to/your/output.wav --analyze
+```
+
 ## Recommended Dependencies and Requirements
 - Python: 3.10.x
 - PyTorch: 2.0.0+cu118

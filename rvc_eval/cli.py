@@ -24,7 +24,11 @@ logger = getLogger(__name__)
 def print_handler(address, *args):
     print(f"Received message from {address}: {args}")
 
-osc_args = {}
+osc_args = {
+    "models": [],
+    "input_files": [],
+    "output_files": []
+}
 
 def set_all_paths(address, args_string):
     global osc_args
@@ -34,15 +38,16 @@ def set_all_paths(address, args_string):
     paths = args_string.split(", ")
 
     try:
-        osc_args["model"] = paths[0].strip()
-        osc_args["input_file"] = paths[1].strip()
-        osc_args["output_file"] = paths[2].strip()
+        osc_args["input_files"] = paths[0]  # Every 3rd item starting from index 0
+        osc_args["output_files"] = paths[1:3]  # Every 3rd item starting from index 1
+        osc_args["models"] = paths[4:6]  # Every 3rd item starting from index 2
 
-        print("model: ", osc_args["model"])
-        print("input_file: ", osc_args["input_file"])
-        print("output_file: ", osc_args["output_file"])
+        print("models: ", osc_args["models"])
+        print("input_files: ", osc_args["input_files"])
+        print("output_files: ", osc_args["output_files"])
     except IndexError:
         print("Incorrect number of arguments received. Expecting model_path, input_path, and output_path.")
+
 
 def run_osc_server(args):
     disp = Dispatcher()
@@ -52,15 +57,29 @@ def run_osc_server(args):
     print(f"Serving on {server.server_address}")
 
     while True:
-        server.handle_request()  # Handle requests one by one
+        server.handle_request()
 
-        if all(value is not None for value in osc_args.values()):
-            args.model = osc_args.get("model", "").replace('"','')
-            args.input_file = osc_args.get("input_file", "").replace('"','')
-            args.output_file = osc_args.get("output_file", "").replace('"','')
+        # Run the main function for each model, input, and output path
+        for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
+            args.model = model_path.replace('"', '')
+            args.input_file = input_path.replace('"', '')
+            args.output_file = output_path.replace('"', '')
             main(args)
-            break  # After processing, break the loop
+        break
     server.serve_forever()
+
+
+    # while True:
+    #     server.handle_request()  # Handle requests one by one
+
+    #     if all(value is not None for value in osc_args.values()):
+    #         args.model = osc_args.get("model", "").replace('"','')
+    #         args.input_file = osc_args.get("input_file", "").replace('"','')
+    #         args.output_file = osc_args.get("output_file", "").replace('"','')
+    #         main(args)
+    #         break  # After processing, break the loop
+    # server.serve_forever()
+    
 
 
 def resample_audio(audio, original_sr, target_sr):
@@ -132,8 +151,8 @@ def main(args):
 
     # Save the output
     sf.write(args.output_file, audio_output_full.astype('float32'), 44100)  # Save at 44.1kHz rate
-    print('Done with processing and I have now saved the file')
-    
+    print('Done with processing and I have now saved the file here: ', args.output_file)
+
     # Send OSC command only if --use-osc argument is provided
     if args.use_osc:
         # Create a client to send OSC messages, targeting the remote host on port 5005

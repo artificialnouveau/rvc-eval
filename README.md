@@ -63,7 +63,7 @@ To run the voice conversion system (with the default `hubert_base.pt` model or s
 ```bash
 python -m rvc_eval.cli --use-osc
 
-# Do this if you want to use the analyze function
+# Do this if you want to use the analyze function (see more information below)
 python -m rvc_eval.cli --use-osc --analyze
 ```
 
@@ -76,6 +76,23 @@ python -m rvc_eval.cli --model path/to/your/models/models.pth --input-file path/
 ```
 python -m rvc_eval.cli --model path/to/your/models/models.pth --input-file path/to/your/input.wav --output-file path/to/your/output.wav --analyze
 ```
+
+## Analyze Function
+The --analyze function allows for the analysis of audio files, primarily focusing on extracting voice features. It combines the capabilities of OpenAI's Whisper ASR model and the my-voice-analysis library to offer insights into voice recordings.
+Features
+
+    Transcribes audio content to text.
+    Provides insights such as:
+        Gender
+        Emotion
+        Number of syllables
+        Number of pauses
+        Rate of speech
+        Articulation rate
+        Speaking duration vs. original duration
+        Fundamental frequency details: mean, std, median, min, max, 25th quantile, and 75th quantile.
+
+All analysis results are saved in a JSON file for easy access and further processing.
 
 ## Recommended Dependencies and Requirements
 - Python: 3.10.x

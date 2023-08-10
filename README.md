@@ -32,14 +32,9 @@ git submodule update --init --recursive
 
 3. Install dependencies using Pip. rvc-eval only runs on python 3.10 so we need to create a separate conda environment
 ```bash
-conda create -n rvc-eval python=3.10 pip
+conda create -n rvc-eval python=3.10 --file requirements.txt
 conda activate rvc-eval
 pip install git+https://github.com/artificialnouveau/my-voice-analysis
-pip install -U openai-whisper
-pip install -r requirements.txt
-
-if the requirements pip install -r requirements.txt failed try
-conda install -c conda-forge numpy=1.24 ffmpeg 
 
 ```
 

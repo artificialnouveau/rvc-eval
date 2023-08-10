@@ -96,8 +96,10 @@ def run_osc_server(args):
             args.input_file = input_path.replace('"', '')
             args.output_file = output_path.replace('"', '')
             main(args)
-        break
-    server.serve_forever()
+        
+        # Optionally add a short sleep to not overload the CPU (or you can remove it if not needed)
+        time.sleep(1)
+
     
 
 def resample_audio(audio, original_sr, target_sr):

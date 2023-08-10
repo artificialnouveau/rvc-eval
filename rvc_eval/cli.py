@@ -14,8 +14,13 @@ import soundfile as sf
 import numpy as np
 import torch
 from tqdm import tqdm
+import traceback
+
 from rvc_eval.vc_infer_pipeline import VC
+# from rvc_eval.vc2_infer_pipeline import VC2
 from rvc_eval.model import load_hubert, load_net_g
+import json
+import whisper
 
 sys.path.append(os.path.dirname(__file__))
 from speech_analysis import analyze_audio
@@ -33,40 +38,41 @@ osc_args = {
     "output_files": []
 }
 
-def set_all_paths(address, args_string, analyze=False):  # 'analyze' parameter
+def set_all_paths(address, args_string, analyze=False):
     global osc_args
-    if args_string.startswith("'") and args_string.endswith("'"):
-        args_string = args_string[1:-1]
-    if 'Macintosh HD:' in args_string:
-        args_string = args_string.replace('Macintosh HD:', '')
-        
-    paths = args_string.split(", ")
-
-    input_files = []
-    output_files = []
-    models = []
-
     try:
-        # The first path is always input
-        input_file = paths[0]
-        if analyze:
-            analyze_audio(input_file)
-        
-        # For the remaining paths, order is: model1, output1, model2, output2, ...
-        for i in range(1, len(paths)-1, 2):
-            models.append(paths[i])
-            output_files.append(paths[i + 1])
+        if args_string.startswith("'") and args_string.endswith("'"):
+            args_string = args_string[1:-1]
+        if 'Macintosh HD:' in args_string:
+            args_string = args_string.replace('Macintosh HD:', '')
 
-        # Ensure the input_files list has the same length as models and output_files
-        input_files = [input_file] * len(models)
+        paths = args_string.split(", ")
 
-        osc_args["input_files"] = input_files
-        osc_args["output_files"] = output_files
-        osc_args["models"] = models
+        # Extracting input_file, output_file, and model from OSC message
+        input_file = paths[0] if len(paths) > 0 else None
+        output_file = paths[1] if len(paths) > 1 else None
+        model = paths[2] if len(paths) > 2 else None
 
-        print("input_files: ", osc_args["input_files"])
-        print("output_files: ", osc_args["output_files"])
-        print("models: ", osc_args["models"])
+        # Analyze the audio if the analyze flag is true
+        if analyze and input_file:
+            json_result = analyze_audio(input_file)
+            print(f"Analysis saved in: {json_result}")
+            
+            # For the remaining paths, order is: model1, output1, model2, output2, ...
+            for i in range(1, len(paths)-1, 2):
+                models.append(paths[i])
+                output_files.append(paths[i + 1])
+
+            # Ensure the input_files list has the same length as models and output_files
+            input_files = [input_file] * len(models)
+
+            osc_args["input_files"] = input_files
+            osc_args["output_files"] = output_files
+            osc_args["models"] = models
+
+            print("input_files: ", osc_args["input_files"])
+            print("output_files: ", osc_args["output_files"])
+            print("models: ", osc_args["models"])
     except IndexError:
         print("Incorrect sequence of arguments received. Expecting input_path, followed by alternating model_path and output_path.")
 
@@ -119,6 +125,7 @@ def main(args):
         f0_up_key = args.f0_up_key
         f0_method = args.f0_method
         vc = VC(sampling_ratio, device, is_half, repeat)
+        #vc = VC2(sampling_ratio, device, is_half, repeat)
     
         audio_output_chunks = []
     
@@ -213,10 +220,12 @@ if __name__ == "__main__":
     logger.setLevel(args.log_level)
 
     if args.analyze:
-        if not args.input_file:
-            print("The --input-file option is required for analysis.")
+        if not args.input_file and not args.use_osc:
+            print("The --input-file option is required for analysis when not using OSC mode.")
             sys.exit(1)
-        analyze_audio(args.input_file)
+        if args.input_file:
+            json_result = analyze_audio(args.input_file)
+            print(f"Analysis saved in: {json_result}")
 
     if args.use_osc:
         run_osc_server(args)
@@ -225,5 +234,4 @@ if __name__ == "__main__":
             print("When not using OSC mode, -m/--model, --input-file, and --output-file are required.")
             sys.exit(1)
         main(args)
-
 

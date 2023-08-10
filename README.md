@@ -35,9 +35,12 @@ git submodule update --init --recursive
 conda create -n rvc-eval python=3.10 pip
 conda activate rvc-eval
 pip install git+https://github.com/artificialnouveau/my-voice-analysis
+pip install -U openai-whisper
 pip install -r requirements.txt
 
-ignore this line for now: pip install -e .
+if the requirements pip install -r requirements.txt failed try
+conda install -c conda-forge numpy=1.24 ffmpeg 
+
 ```
 
 if pip install requirements fails, do the following

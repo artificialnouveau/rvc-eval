@@ -43,7 +43,7 @@ def analyze_audio(filename):
     }
     
     # Save the data dictionary to a JSON file
-    json_filename = file + "_analysis.json"
+    json_filename = directory+file+ "_analysis.json"
     with open(json_filename, 'w') as json_file:
         json.dump(data, json_file, indent=4)
 

@@ -1,80 +1,123 @@
-antlr4-python3-runtime==4.8
-appdirs==1.4.4
-audioread==3.0.0
-bitarray==2.8.1
-brotlipy==0.7.0
-certifi==2023.7.22
-cffi @ file:///C:/b/abs_49n3v2hyhr/croot/cffi_1670423218144/work
-charset-normalizer @ file:///tmp/build/80754af9/charset-normalizer_1630003229654/work
-colorama==0.4.6
-cryptography @ file:///C:/b/abs_b7d7drzbky/croot/cryptography_1673298763653/work
-Cython @ file:///D:/bld/cython_1689612546663/work
-decorator==5.1.1
-distlib @ file:///home/conda/feedstock_root/build_artifacts/distlib_1689598491484/work
-fairseq==0.12.2
-ffmpeg-python==0.2.0
-filelock @ file:///home/conda/feedstock_root/build_artifacts/filelock_1686612785345/work
-future==0.18.3
-hydra-core==1.0.7
-idna @ file:///C:/b/abs_bdhbebrioa/croot/idna_1666125572046/work
-Jinja2 @ file:///C:/b/abs_7cdis66kl9/croot/jinja2_1666908141852/work
-joblib==1.3.1
-lazy_loader==0.3
-librosa==0.10.0.post2
-llvmlite==0.40.1
-lxml==4.9.3
-MarkupSafe @ file:///C:/ci/markupsafe_1654508036328/work
-mkl-fft==1.3.6
-mkl-random @ file:///C:/Users/dev-admin/mkl/mkl_random_1682977971003/work
-mkl-service==2.4.0
-more-itertools==10.1.0
-mpmath @ file:///C:/b/abs_7833jrbiox/croot/mpmath_1690848321154/work
-msgpack==1.0.5
-my-voice-analysis @ git+https://github.com/artificialnouveau/my-voice-analysis@30c1bba9714d78f5ee0eae9d1925b89106d2f7a5
-networkx @ file:///C:/b/abs_e6gi1go5op/croot/networkx_1690562046966/work
-numba==0.57.1
-numpy @ file:///D:/bld/numpy_1687808631724/work
-omegaconf==2.0.6
-openai-whisper==20230314
-packaging @ file:///C:/b/abs_cfsup8ur87/croot/packaging_1671697442297/work
-pandas==2.0.3
-Pillow==10.0.0
-pipenv @ file:///home/conda/feedstock_root/build_artifacts/pipenv_1690151524596/work
-platformdirs @ file:///home/conda/feedstock_root/build_artifacts/platformdirs_1690813113769/work
-pooch @ file:///tmp/build/80754af9/pooch_1623324770023/work
-portalocker==2.7.0
-praat-parselmouth==0.4.3
-PyAudio==0.2.11
-pycparser @ file:///tmp/build/80754af9/pycparser_1636541352034/work
-pydub @ file:///home/conda/feedstock_root/build_artifacts/pydub_1615612442567/work
-pyOpenSSL @ file:///C:/b/abs_08f38zyck4/croot/pyopenssl_1690225407403/work
-PySocks @ file:///C:/ci_310/pysocks_1642089375450/work
-python-dateutil==2.8.2
-python-osc==1.8.3
-pytz==2023.3
-pywin32==306
-pyworld @ file:///D:/bld/pyworld_1689974603370/work
-PyYAML==6.0.1
-regex==2023.6.3
-requests @ file:///C:/ci/requests_1657735340829/work
-resampy==0.4.2
--e git+https://github.com/esnya/rvc-eval.git@677b42c26171fc8bb8dd5ddaf96b0dd3ce08c49f#egg=rvc_eval
-sacrebleu==2.3.1
-scikit-learn==1.3.0
-scipy==1.10.1
-six==1.16.0
-soundfile==0.12.1
-soxr==0.3.5
-sympy @ file:///C:/b/abs_95fbf1z7n6/croot/sympy_1668202411612/work
-tabulate==0.9.0
-threadpoolctl==3.2.0
-tiktoken==0.3.1
-torch==2.0.1
-torchaudio==2.0.2
-tqdm==4.65.1
-typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/typing_extensions_1688315532570/work
-tzdata==2023.3
-urllib3 @ file:///C:/b/abs_9bcwxczrvm/croot/urllib3_1673575521331/work
-virtualenv @ file:///home/conda/feedstock_root/build_artifacts/virtualenv_1690273226872/work
-virtualenv-clone==0.5.4
-win-inet-pton @ file:///C:/ci_310/win_inet_pton_1642658466512/work
+# This file may be used to create an environment using:
+# $ conda create --name <env> --file <this file>
+# platform: win-64
+antlr4-python3-runtime=4.8=pypi_0
+appdirs=1.4.4=pyhd3eb1b0_0
+audioread=3.0.0=pypi_0
+bitarray=2.8.1=pypi_0
+blas=1.0=mkl
+brotlipy=0.7.0=py310h2bbff1b_1002
+bzip2=1.0.8=he774522_0
+ca-certificates=2023.7.22=h56e8100_0
+certifi=2023.7.22=pyhd8ed1ab_0
+cffi=1.15.1=py310h2bbff1b_3
+charset-normalizer=2.0.4=pyhd3eb1b0_0
+colorama=0.4.6=pypi_0
+cryptography=38.0.4=py310h21b164f_0
+cython=3.0.0=py310h00ffb61_0
+decorator=5.1.1=pypi_0
+distlib=0.3.7=pyhd8ed1ab_0
+fairseq=0.12.2=pypi_0
+faiss=1.7.4=py310h939f645_0_cpu
+ffmpeg=4.3.1=ha925a31_0
+ffmpeg-python=0.2.0=pypi_0
+filelock=3.12.2=pyhd8ed1ab_0
+future=0.18.3=pypi_0
+hydra-core=1.0.7=pypi_0
+icc_rt=2022.1.0=h6049295_2
+idna=3.4=py310haa95532_0
+intel-openmp=2023.2.0=h57928b3_49496
+jinja2=3.1.2=py310haa95532_0
+joblib=1.3.1=pypi_0
+lazy-loader=0.3=pypi_0
+libblas=3.9.0=1_h8933c1f_netlib
+libcblas=3.9.0=5_hd5c7e75_netlib
+libfaiss=1.7.4=hba6d9cf_0_cpu
+libfaiss-avx2=1.7.4=h1234567_0_cpu
+libffi=3.4.4=hd77b12b_0
+liblapack=3.9.0=5_hd5c7e75_netlib
+librosa=0.9.1=pypi_0
+libuv=1.44.2=h2bbff1b_0
+llvmlite=0.40.1=pypi_0
+lxml=4.9.3=pypi_0
+m2w64-gcc-libgfortran=5.3.0=6
+m2w64-gcc-libs=5.3.0=7
+m2w64-gcc-libs-core=5.3.0=7
+m2w64-gmp=6.1.0=2
+m2w64-libwinpthread-git=5.0.0.4634.697f757=2
+markupsafe=2.1.1=py310h2bbff1b_0
+mkl=2023.1.0=h8bd8f75_46356
+mkl-service=2.4.0=py310h2bbff1b_1
+mkl_fft=1.3.6=py310h4ed8f06_1
+mkl_random=1.2.2=py310h4ed8f06_1
+more-itertools=10.1.0=pypi_0
+mpmath=1.3.0=py310haa95532_0
+msgpack=1.0.5=pypi_0
+msys2-conda-epoch=20160418=1
+my-voice-analysis=0.7=pypi_0
+networkx=3.1=py310haa95532_0
+numba=0.57.1=pypi_0
+numpy=1.24.4=py310hd02465a_0
+omegaconf=2.0.6=pypi_0
+openai-whisper=20230314=pypi_0
+openssl=3.1.2=hcfcfb64_0
+packaging=22.0=py310haa95532_0
+pandas=2.0.3=pypi_0
+pillow=10.0.0=pypi_0
+pip=23.2.1=py310haa95532_0
+pipenv=2023.7.23=pyhd8ed1ab_0
+platformdirs=3.10.0=pyhd8ed1ab_0
+pooch=1.4.0=pyhd3eb1b0_0
+portalocker=2.7.0=pypi_0
+portaudio=19.6.0=he774522_4
+praat-parselmouth=0.4.3=pypi_0
+pyaudio=0.2.11=py310h2bbff1b_2
+pycparser=2.21=pyhd3eb1b0_0
+pydub=0.25.1=pyhd8ed1ab_0
+pyopenssl=23.2.0=py310haa95532_0
+pysocks=1.7.1=py310haa95532_0
+python=3.10.12=he1021f5_0
+python-dateutil=2.8.2=pypi_0
+python-osc=1.8.3=pypi_0
+python_abi=3.10=2_cp310
+pytorch=2.0.1=py3.10_cpu_0
+pytorch-mutex=1.0=cpu
+pytz=2023.3=pypi_0
+pywin32=306=pypi_0
+pyworld=0.3.4=py310h220cb41_0
+pyyaml=6.0.1=pypi_0
+regex=2023.6.3=pypi_0
+requests=2.28.1=py310haa95532_0
+resampy=0.4.2=pypi_0
+rvc-eval=0.1.0=dev_0
+sacrebleu=2.3.1=pypi_0
+scikit-learn=1.3.0=pypi_0
+scipy=1.10.1=py310h309d312_1
+setuptools=68.0.0=py310haa95532_0
+six=1.16.0=pypi_0
+soundfile=0.12.1=pypi_0
+soxr=0.3.5=pypi_0
+sqlite=3.41.2=h2bbff1b_0
+sympy=1.11.1=py310haa95532_0
+tabulate=0.9.0=pypi_0
+tbb=2021.6.0=h59b6b97_1
+threadpoolctl=3.2.0=pypi_0
+tiktoken=0.3.1=pypi_0
+tk=8.6.12=h2bbff1b_0
+torchaudio=2.0.2=pypi_0
+torchcrepe=0.0.21=pypi_0
+tqdm=4.65.1=pypi_0
+typing-extensions=4.7.1=hd8ed1ab_0
+typing_extensions=4.7.1=pyha770c72_0
+tzdata=2023.3=pypi_0
+ucrt=10.0.22621.0=h57928b3_0
+urllib3=1.26.14=py310haa95532_0
+vc=14.2=h21ff451_1
+vc14_runtime=14.36.32532=hfdfe4a8_17
+virtualenv=20.24.2=pyhd8ed1ab_0
+virtualenv-clone=0.5.4=pyh9f0ad1d_0
+vs2015_runtime=14.36.32532=h05e6639_17
+wheel=0.38.4=py310haa95532_0
+win_inet_pton=1.1.0=py310haa95532_0
+xz=5.4.2=h8cc25b3_0
+zlib=1.2.13=h8cc25b3_0

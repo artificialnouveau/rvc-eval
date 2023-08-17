@@ -12,7 +12,7 @@ from rvc_eval.config import Config
 from scipy.signal import resample_poly
 
 class VC(object):
-    def __init__(self, tgt_sr, device, is_half, x_pad):
+    def __init__(self, tgt_sr, device, is_half, x_pad, version ="v2"):
         config = Config.get(is_half)
         self.x_center = config.x_center
         self.x_max = config.x_max
@@ -28,6 +28,7 @@ class VC(object):
         self.t_max = self.sr * self.x_max  # 免查询时长阈值
         self.device = device
         self.is_half = is_half
+        self.version = version
 
     def _pm(
         self,
@@ -102,11 +103,21 @@ class VC(object):
         feats = feats.view(1, -1)
         padding_mask = torch.BoolTensor(feats.shape).fill_(False).to(self.device)
 
-        logits = model.extract_features(
-            source=feats.to(self.device),
-            padding_mask=padding_mask,
-            output_layer=9,
-        )
+        if self.version == "v1":
+            logits = model.extract_features(
+                source=feats.to(self.device),
+                padding_mask=padding_mask,
+                output_layer=4,  # Adjust for v1 model's layer
+            )
+        elif self.version == "v2":
+            logits = model.extract_features(
+                source=feats.to(self.device),
+                padding_mask=padding_mask,
+                output_layer=9,  # Adjust for v2 model's layer
+            )
+        else:
+            raise ValueError(f"Invalid model version: {self.version}")
+
         feats = model.final_proj(logits[0])
 
         feats = F.interpolate(feats.permute(0, 2, 1), scale_factor=2).permute(0, 2, 1)
@@ -170,3 +181,4 @@ class VC(object):
         audio_output_resampled = resample(audio_output.numpy(), original_length)
 
         return audio_output_resampled
+    

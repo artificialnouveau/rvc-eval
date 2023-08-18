@@ -72,7 +72,13 @@ python -m rvc_eval.cli --use-osc --analyze
 python -m rvc_eval.cli --model path/to/your/models/models.pth --input-file path/to/your/input.wav --output-file path/to/your/output.wav
 ```
 
-3. If you want to include the speech analysis just add --analyze:
+3. If you want to use RVC v1 or v2 just add --rvcversion:
+If you do not specify the version, by default the rvcversion is "v2"
+```
+python -m rvc_eval.cli --model path/to/your/models/models.pth --input-file path/to/your/input.wav --output-file path/to/your/output.wav --rvcrevsion "v1"
+```
+
+4. If you want to include the speech analysis just add --analyze:
 ```
 python -m rvc_eval.cli --model path/to/your/models/models.pth --input-file path/to/your/input.wav --output-file path/to/your/output.wav --analyze
 ```

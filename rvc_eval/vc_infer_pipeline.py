@@ -226,21 +226,14 @@ class VC(object):
         audio_16k = resample(audio, num_samples_16k)
 
         # Adjust padding based on model version
-        if version == "v1":
-            audio_pad = np.pad(audio_16k, (self.t_pad, self.t_pad), mode="reflect")
-
-        elif version == "v2":
-            target_length = len(audio_16k) + 2 * self.t_pad
-            audio_tensor = torch.from_numpy(audio_16k)
-            if len(audio_tensor) < target_length:
-                padding_size = target_length - len(audio_tensor)
-                audio_pad = F.pad(audio_tensor, (padding_size // 2, padding_size - (padding_size // 2)))
-                audio_pad = audio_pad.numpy()
-            else:
-                audio_pad = audio_tensor.numpy()
-
+        target_length = len(audio_16k) + 2 * self.t_pad
+        audio_tensor = torch.from_numpy(audio_16k)
+        if len(audio_tensor) < target_length:
+            padding_size = target_length - len(audio_tensor)
+            audio_pad = F.pad(audio_tensor, (padding_size // 2, padding_size - (padding_size // 2)))
+            audio_pad = audio_pad.numpy()
         else:
-            raise ValueError("Unsupported model version")
+            audio_pad = audio_tensor.numpy()
 
         p_len = len(audio_pad) // self.window
 

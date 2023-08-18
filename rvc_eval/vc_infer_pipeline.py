@@ -12,7 +12,7 @@ from rvc_eval.config import Config
 from scipy.signal import resample_poly
 
 class VC(object):
-    def __init__(self, tgt_sr, device, is_half, x_pad, version ="v2"):
+    def __init__(self, tgt_sr, device, is_half, x_pad, version):
         config = Config.get(is_half)
         self.x_center = config.x_center
         self.x_max = config.x_max
@@ -96,65 +96,158 @@ class VC(object):
         audio0: torch.Tensor,
         pitch: torch.Tensor,
         pitchf: torch.Tensor,
-    ):  # ,file_index,file_big_npy
+    ):
+        # Process the audio tensor
         feats = audio0.half() if self.is_half else audio0.float()
+        
 
         assert feats.dim() == 1, feats.dim()
         feats = feats.view(1, -1)
         padding_mask = torch.BoolTensor(feats.shape).fill_(False).to(self.device)
 
+        # Extract features based on model version
         if self.version == "v1":
-            logits = model.extract_features(
-                source=feats.to(self.device),
-                padding_mask=padding_mask,
-                output_layer=4,  # Adjust for v1 model's layer
-            )
+            output_layer = 9
         elif self.version == "v2":
-            logits = model.extract_features(
-                source=feats.to(self.device),
-                padding_mask=padding_mask,
-                output_layer=9,  # Adjust for v2 model's layer
-            )
+            output_layer = 12
         else:
             raise ValueError(f"Invalid model version: {self.version}")
 
-        feats = model.final_proj(logits[0])
+        with torch.no_grad():
+            logits = model.extract_features(
+                source=feats.to(self.device),
+                padding_mask=padding_mask,
+                output_layer=output_layer
+            )
+            feats = model.final_proj(logits[0]) if self.version == "v1" else logits[0]
 
-        feats = F.interpolate(feats.permute(0, 2, 1), scale_factor=2).permute(0, 2, 1)
+        # Handle pitch adjustments
+        if pitch is not None and pitchf is not None:
+            original_feats = feats.clone()
+            feats = F.interpolate(feats.permute(0, 2, 1), scale_factor=2).permute(0, 2, 1)
+            original_feats = F.interpolate(original_feats.permute(0, 2, 1), scale_factor=2).permute(0, 2, 1)
+            
+            p_len = audio0.shape[0] // self.window
+            if feats.shape[1] < p_len:
+                p_len = feats.shape[1]
+                pitch = pitch[:, :p_len]
+                pitchf = pitchf[:, :p_len]
+                
+            pitchff = pitchf.clone()
+            pitchff[pitchf > 0] = 1
+            pitchff[pitchf <= 0] = 0.5  # replace with desired value if needed
+            pitchff = pitchff.unsqueeze(-1)
+            
+            feats = feats * pitchff + original_feats * (1 - pitchff)
+            feats = feats.to(original_feats.dtype)
 
-        assert feats.shape[1] <= audio0.shape[0] // self.window
-        p_len = feats.shape[1]
-
-        audio1 = (
-            net_g.infer(
-                feats,
-                torch.tensor([p_len], device=self.device, dtype=torch.long),
-                pitch[:, :p_len],
-                pitchf[:, :p_len],
-                sid,
-            )[0][0, 0]
-        ).data
+        # Generate audio
+        p_len = torch.tensor([feats.shape[1]], device=self.device).long()
+        with torch.no_grad():
+            audio1 = (
+                net_g.infer(feats, p_len, pitch, pitchf, sid)[0][0, 0]
+            ).data
 
         return audio1
 
 
-    def pipeline(self, model, net_g, sid, audio, f0_up_key, f0_method):
-        original_length = len(audio)
+    def pad_or_trim_tensor(self, tensor, target_length):
+        tensor_length = tensor.shape[-1]
         
-        # Resample from original rate to 16kHz
-        num_samples_16k = int(original_length * 16000 / 44100)
-        audio_16k = resample(audio, num_samples_16k)
+        if tensor_length < target_length:
+            padding_size = target_length - tensor_length
+            padded_tensor = F.pad(tensor, (0, padding_size), mode="constant", value=0)
+            return padded_tensor
+        
+        elif tensor_length > target_length:
+            trimmed_tensor = tensor[..., :target_length]
+            return trimmed_tensor
 
-        # Pad the audio
-        audio_pad = np.pad(audio_16k, (self.t_pad, self.t_pad), mode="reflect")
+        return tensor
+
+
+
+    def determine_target_length_v2(self, audio_tensor):
+        target_length = audio_tensor.shape[0]
+        return target_length
+
+
+    def adjust_tensor_for_v2(self,audio_tensor, target_length):
+        return F.interpolate(audio_tensor.unsqueeze(0).unsqueeze(0), size=target_length).squeeze(0).squeeze(0)
+
+
+    def pipeline_v1(
+        self,
+        model,
+        net_g,
+        sid,
+        audio,
+        f0_up_key,
+        f0_method,
+    ):
+        audio_pad = np.pad(audio, (self.t_pad, self.t_pad), mode="reflect")
+
         p_len = audio_pad.shape[0] // self.window
 
-        # Extract features
         sid = torch.tensor(sid, device=self.device).unsqueeze(0).long()
         pitch, pitchf = self.get_f0(audio_pad, p_len, f0_up_key, f0_method)
         pitch = torch.tensor(
             pitch[:p_len], device=self.device, dtype=torch.long
         ).unsqueeze(0)
+        pitchf = torch.tensor(
+            pitchf[:p_len],
+            device=self.device,
+            dtype=torch.float16 if self.is_half else torch.float32,
+        ).unsqueeze(0)
+
+        vc_output = self.vc(
+            model,
+            net_g,
+            sid,
+            torch.from_numpy(audio_pad),
+            pitch,
+            pitchf,
+        )
+
+        audio_output = (
+            vc_output
+            if self.t_pad_tgt == 0
+            else vc_output[self.t_pad_tgt : -self.t_pad_tgt]
+        )
+
+        return audio_output
+
+
+    def pipeline_v2(self, model, net_g, sid, audio, f0_up_key, f0_method):
+        original_length = len(audio)
+
+        # Resample from original rate to 16kHz
+        num_samples_16k = int(original_length * 16000 / 44100)
+        audio_16k = resample(audio, num_samples_16k)
+
+        # Adjust padding based on model version
+        if version == "v1":
+            audio_pad = np.pad(audio_16k, (self.t_pad, self.t_pad), mode="reflect")
+
+        elif version == "v2":
+            target_length = len(audio_16k) + 2 * self.t_pad
+            audio_tensor = torch.from_numpy(audio_16k)
+            if len(audio_tensor) < target_length:
+                padding_size = target_length - len(audio_tensor)
+                audio_pad = F.pad(audio_tensor, (padding_size // 2, padding_size - (padding_size // 2)))
+                audio_pad = audio_pad.numpy()
+            else:
+                audio_pad = audio_tensor.numpy()
+
+        else:
+            raise ValueError("Unsupported model version")
+
+        p_len = len(audio_pad) // self.window
+
+        # Extract features
+        sid = torch.tensor(sid, device=self.device).unsqueeze(0).long()
+        pitch, pitchf = self.get_f0(audio_pad, p_len, f0_up_key, f0_method)
+        pitch = torch.tensor(pitch[:p_len], device=self.device, dtype=torch.long).unsqueeze(0)
         pitchf = torch.tensor(
             pitchf[:p_len],
             device=self.device,
@@ -171,14 +264,11 @@ class VC(object):
             pitchf,
         )
 
+        # Trimming padding from the vc_output if needed
         audio_output = (
             vc_output
             if self.t_pad_tgt == 0
             else vc_output[self.t_pad_tgt : -self.t_pad_tgt]
         )
 
-        # Resample output from 16kHz back to 44.1kHz
-        audio_output_resampled = resample(audio_output.numpy(), original_length)
-
-        return audio_output_resampled
-    
+        return audio_output

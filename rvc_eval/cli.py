@@ -125,8 +125,8 @@ def main(args):
     f0_up_key = args.f0_up_key
     f0_method = args.f0_method
 
-    vc = VC(sampling_ratio, device, is_half, repeat, "v2")
-    
+    vc = VC(sampling_ratio, device, is_half, repeat, args.rvcversion)
+
     audio_output_chunks = []
 
     with sf.SoundFile(args.input_file, 'r') as f:
@@ -145,16 +145,28 @@ def main(args):
 
                 audio_input = audio_input.astype(np.float64)
 
-                audio_output = (
-                    vc.pipeline(
-                        hubert_model,
-                        net_g,
-                        sid,
-                        audio_input,
-                        f0_up_key,
-                        f0_method,
+                if args.rvcversion == "v1":
+                    audio_output = (
+                        vc.pipeline_v1(
+                            hubert_model,
+                            net_g,
+                            sid,
+                            audio_input,
+                            f0_up_key,
+                            f0_method,
+                        )
                     )
-                )
+                elif args.rvcversion == "v2":
+                    audio_output = (
+                        vc.pipeline_v2(
+                            hubert_model,
+                            net_g,
+                            sid,
+                            audio_input,
+                            f0_up_key,
+                            f0_method,
+                        )
+                    )
 
                 audio_output_chunks.append(audio_output)
 

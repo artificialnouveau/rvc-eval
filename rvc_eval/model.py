@@ -1,14 +1,3 @@
-# def load_hubert(model_path: str, is_half: bool, device: torch.device):
-#     from fairseq import checkpoint_utils
-
-#     [model], _, _ = checkpoint_utils.load_model_ensemble_and_task(
-#         [model_path],
-#         suffix="",
-#     )
-#     model.eval()
-#     return model.to(device).half() if is_half else model.to(device).float()
-
-
 import torch
 from fairseq import checkpoint_utils
 
@@ -62,8 +51,10 @@ def load_net_g(model_path: str, is_half: bool, device: torch.device, version: st
         if_f0 = cpt.get("f0", 1)
         if if_f0 == 1:
             net_g = SynthesizerTrnMs768NSFsid(*cpt["config"], is_half=is_half).to(device)
+            net_g.eval()
         else:
             net_g = SynthesizerTrnMs768NSFsid_nono(*cpt["config"]).to(device)
+            net_g.eval()
         try:
             # Try to load all the weights first
             net_g.load_state_dict(cpt["weight"], strict=False)

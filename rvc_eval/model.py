@@ -27,17 +27,6 @@ def load_partial_state_dict(model, state_dict):
     model.load_state_dict(model_dict)
 
 
-def load_partial_state_dict(model, state_dict):
-    """
-    Load weights from the checkpoint into the model.
-    Skip weights where the size doesn't match.
-    """
-    model_dict = model.state_dict()
-    pretrained_dict = {k: v for k, v in state_dict.items() if k in model_dict and model_dict[k].size() == v.size()}
-    model_dict.update(pretrained_dict)
-    model.load_state_dict(model_dict)
-
-
 def load_net_g(model_path: str, is_half: bool, device: torch.device, version: str):
     from rvc.infer_pack.models import SynthesizerTrnMs256NSFsid, SynthesizerTrnMs256NSFsid_nono, SynthesizerTrnMs768NSFsid, SynthesizerTrnMs768NSFsid_nono
     

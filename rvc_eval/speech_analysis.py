@@ -6,20 +6,26 @@ os.environ['KMP_DUPLICATE_LIB_OK']='True'
 def analyze_audio(filename):
     mysp = __import__("my-voice-analysis")
 
-    print("filename: ", filename)
-    file = filename.rsplit('\\',-1)[-1]
+    # Get directory name
+    directory = os.path.dirname(filename)
+    # Get file name
+    file = os.path.basename(filename)
     file = file.replace('.wav','')
-    directory = filename.rsplit('\\',1)[0]+"\\"
+
+    print("filename: ", filename)
+    # file = filename.rsplit('\\',-1)[-1]
+    # directory = filename.rsplit('\\',1)[0]+"\\"
     print("file: ", file)
     print("directory: ", directory)
-    
 
+    #Whisper Speech to Text
     model = whisper.load_model("base")
     result = model.transcribe(filename)
     text = result["text"]
     print('text: ', text)
     print('')
-    
+
+    # Speech Analysis
     gender, emotion = mysp.myspgend(file, directory)
     dataset,number_of_syllables,number_of_pauses,rate_of_speech,articulation_rate,speaking_duration,original_duration,balance,f0_mean,f0_std,f0_median,f0_min,f0_max,f0_quantile25,f0_quan75 = mysp.mysptotal(file, directory)
     
@@ -45,7 +51,8 @@ def analyze_audio(filename):
     }
     
     # Save the data dictionary to a JSON file
-    json_filename = directory+file+ "_analysis.json"
+    #json_filename = directory+file+ "_analysis.json"
+    json_filename = os.path.join(directory, file+'_analysis.json')
     with open(json_filename, 'w') as json_file:
         json.dump(data, json_file, indent=4)
 

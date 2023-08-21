@@ -1,7 +1,6 @@
 import whisper
 import json
 import os
-os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 def analyze_audio(filename):
     mysp = __import__("my-voice-analysis")

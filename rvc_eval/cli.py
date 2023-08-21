@@ -4,6 +4,8 @@ from pythonosc import osc_server
 
 import time
 import os
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
+
 import sys
 from argparse import ArgumentParser
 from logging import getLogger

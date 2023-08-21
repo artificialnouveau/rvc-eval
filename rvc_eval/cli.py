@@ -4,8 +4,6 @@ from pythonosc import osc_server
 
 import time
 import os
-os.environ['KMP_DUPLICATE_LIB_OK']='True'
-
 import sys
 from argparse import ArgumentParser
 from logging import getLogger
@@ -22,6 +20,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 from rvc_eval.vc_infer_pipeline import VC
+# from rvc_eval.vc2_infer_pipeline import VC2
 from rvc_eval.model import load_hubert, load_net_g
 import json
 import whisper
@@ -97,8 +96,10 @@ def run_osc_server(args):
             args.input_file = input_path.replace('"', '')
             args.output_file = output_path.replace('"', '')
             main(args)
-        break
-    server.serve_forever()
+        
+        # Optionally add a short sleep to not overload the CPU (or you can remove it if not needed)
+        time.sleep(1)
+
     
 
 def resample_audio(audio, original_sr, target_sr):
@@ -118,16 +119,15 @@ def main(args):
     print('Device used: ', device)
 
     hubert_model = load_hubert(args.hubert, is_half, device)
-    net_g, sampling_ratio = load_net_g(args.model, is_half, device, args.rvcversion)
-    # net_g, sampling_ratio = load_net_g(args.model, is_half, device, "v1")
+    net_g, sampling_ratio = load_net_g(args.model, is_half, device)
 
     repeat = 3 if is_half else 1
     repeat *= args.quality  # 0 or 3
     sid = 0
     f0_up_key = args.f0_up_key
     f0_method = args.f0_method
-
-    vc = VC(sampling_ratio, device, is_half, repeat, args.rvcversion)
+    vc = VC(sampling_ratio, device, is_half, repeat)
+    #vc = VC2(sampling_ratio, device, is_half, repeat)
 
     audio_output_chunks = []
 
@@ -147,28 +147,16 @@ def main(args):
 
                 audio_input = audio_input.astype(np.float64)
 
-                if args.rvcversion == "v1":
-                    audio_output = (
-                        vc.pipeline_v1(
-                            hubert_model,
-                            net_g,
-                            sid,
-                            audio_input,
-                            f0_up_key,
-                            f0_method,
-                        )
+                audio_output = (
+                    vc.pipeline(
+                        hubert_model,
+                        net_g,
+                        sid,
+                        audio_input,
+                        f0_up_key,
+                        f0_method,
                     )
-                elif args.rvcversion == "v2":
-                    audio_output = (
-                        vc.pipeline_v2(
-                            hubert_model,
-                            net_g,
-                            sid,
-                            audio_input,
-                            f0_up_key,
-                            f0_method,
-                        )
-                    )
+                )
 
                 audio_output_chunks.append(audio_output)
 
@@ -198,7 +186,6 @@ def main(args):
 parser = ArgumentParser()
 parser.add_argument("--use-osc", action="store_true", help="Run in OSC mode.")
 parser.add_argument("-m", "--model", type=str, required=False, help="Path to model file")
-parser.add_argument("--rvcversion", type=str, default="v2", choices=("v1", "v2"))
 parser.add_argument("--input-file", type=str, required=False, help="Path to input audio file")
 parser.add_argument("--output-file", type=str, required=False, help="Path to save processed audio file")
 parser.add_argument("-l", "--log-level", type=str, default="WARNING")
@@ -234,4 +221,3 @@ if __name__ == "__main__":
             print("When not using OSC mode, -m/--model, --input-file, and --output-file are required.")
             sys.exit(1)
         main(args)
-

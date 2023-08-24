@@ -20,7 +20,8 @@ from rvc_eval.model import load_hubert, load_net_g
 sys.path.append(os.path.dirname(__file__))
 from speech_analysis import analyze_audio
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "../rvc/"))
+#sys.path.append(os.path.join(os.path.dirname(__file__), "../rvc/"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..\rvc\"))
 
 logger = getLogger(__name__)
 

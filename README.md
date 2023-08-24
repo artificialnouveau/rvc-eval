@@ -21,7 +21,7 @@ RVC Eval Simplified (rvc-eval) is an appropriate name for this project as it hig
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/artificialnouveau/rvc-eval.git
+git clone -b aug10version https://github.com/artificialnouveau/rvc-eval.git
 ```
 
 2. Initialize and update the RVC submodule in the `rvc` directory:

@@ -73,27 +73,6 @@ def set_all_paths(address, args_string, analyze=False):  # 'analyze' parameter
     except IndexError:
         print("Incorrect sequence of arguments received. Expecting input_path, followed by alternating model_path and output_path.")
 
-
-
-
-The code you posted sets up an OSC (Open Sound Control) server to handle messages sent to the address /max2py. The server function run_osc_server expects to receive OSC messages at this address and updates the global variable osc_args accordingly.
-
-Here are some points to consider to debug the issue where Python doesn't receive the second max OSC:
-
-    Single Request Handling: Your current code uses a while True loop and then breaks immediately after handling the first message (server.handle_request()). This means your server will only ever handle one OSC request and then exit the loop. To handle multiple requests, you might need to adjust your control flow.
-
-    Server Termination: You are also using server.serve_forever() after the while True loop. This won't be reached if you break from the loop. You should decide on using either server.handle_request() in a loop or server.serve_forever() depending on your needs.
-
-    Concurrency: The function run_osc_server blocks the program to serve forever. If you plan to perform some other tasks simultaneously, consider launching it in a separate thread.
-
-Here's a slightly modified version:
-
-python
-
-from threading import Thread
-
-# ... (keep everything else the same)
-
 def run_osc_server(args):
     disp = Dispatcher()
     disp.map("/max2py", set_all_paths)  # One OSC address to set all paths

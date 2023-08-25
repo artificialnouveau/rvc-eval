@@ -10,6 +10,8 @@ from logging import getLogger
 from scipy.io.wavfile import read, write
 from scipy.signal import resample_poly
 
+from threading import Thread
+
 import soundfile as sf
 import numpy as np
 import torch
@@ -74,6 +76,24 @@ def set_all_paths(address, args_string, analyze=False):  # 'analyze' parameter
 
 
 
+The code you posted sets up an OSC (Open Sound Control) server to handle messages sent to the address /max2py. The server function run_osc_server expects to receive OSC messages at this address and updates the global variable osc_args accordingly.
+
+Here are some points to consider to debug the issue where Python doesn't receive the second max OSC:
+
+    Single Request Handling: Your current code uses a while True loop and then breaks immediately after handling the first message (server.handle_request()). This means your server will only ever handle one OSC request and then exit the loop. To handle multiple requests, you might need to adjust your control flow.
+
+    Server Termination: You are also using server.serve_forever() after the while True loop. This won't be reached if you break from the loop. You should decide on using either server.handle_request() in a loop or server.serve_forever() depending on your needs.
+
+    Concurrency: The function run_osc_server blocks the program to serve forever. If you plan to perform some other tasks simultaneously, consider launching it in a separate thread.
+
+Here's a slightly modified version:
+
+python
+
+from threading import Thread
+
+# ... (keep everything else the same)
+
 def run_osc_server(args):
     disp = Dispatcher()
     disp.map("/max2py", set_all_paths)  # One OSC address to set all paths
@@ -81,17 +101,20 @@ def run_osc_server(args):
     server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)
     print(f"Serving on {server.server_address}")
 
-    while True:
-        server.handle_request()
+    def handle_requests():
+        while True:
+            server.handle_request()
+            
+            # Run the main function for each model, input, and output path
+            for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
+                args.model = model_path.replace('"', '')
+                args.input_file = input_path.replace('"', '')
+                args.output_file = output_path.replace('"', '')
+                main(args)
 
-        # Run the main function for each model, input, and output path
-        for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
-            args.model = model_path.replace('"', '')
-            args.input_file = input_path.replace('"', '')
-            args.output_file = output_path.replace('"', '')
-            main(args)
-        break
-    server.serve_forever()
+    # Run the server in a separate thread
+    thread = Thread(target=handle_requests)
+    thread.start()
     
 
 def resample_audio(audio, original_sr, target_sr):

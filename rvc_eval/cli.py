@@ -9,6 +9,7 @@ from argparse import ArgumentParser
 from logging import getLogger
 from scipy.io.wavfile import read, write
 from scipy.signal import resample_poly
+from threading import Thread
 
 import soundfile as sf
 import numpy as np
@@ -83,6 +84,25 @@ def set_all_paths(address, args_string, analyze=True):  # 'analyze' parameter
         print("Incorrect sequence of arguments received. Expecting input_path, followed by alternating model_path and output_path.")
 
 
+# def run_osc_server(args):
+#     disp = Dispatcher()
+#     disp.map("/max2py", set_all_paths)  # One OSC address to set all paths
+
+#     server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)
+#     print(f"Serving on {server.server_address}")
+
+#     while True:
+#         server.handle_request()
+
+#         # Run the main function for each model, input, and output path
+#         for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
+#             args.model = model_path.replace('"', '')
+#             args.input_file = input_path.replace('"', '')
+#             args.output_file = output_path.replace('"', '')
+#             main(args)
+        
+#         # Optionally add a short sleep to not overload the CPU (or you can remove it if not needed)
+#         time.sleep(1)
 def run_osc_server(args):
     disp = Dispatcher()
     disp.map("/max2py", set_all_paths)  # One OSC address to set all paths
@@ -90,19 +110,20 @@ def run_osc_server(args):
     server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)
     print(f"Serving on {server.server_address}")
 
-    while True:
-        server.handle_request()
+    def handle_requests():
+        while True:
+            server.handle_request()
+            
+            # Run the main function for each model, input, and output path
+            for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
+                args.model = model_path.replace('"', '')
+                args.input_file = input_path.replace('"', '')
+                args.output_file = output_path.replace('"', '')
+                main(args)
 
-        # Run the main function for each model, input, and output path
-        for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
-            args.model = model_path.replace('"', '')
-            args.input_file = input_path.replace('"', '')
-            args.output_file = output_path.replace('"', '')
-            main(args)
-        
-        # Optionally add a short sleep to not overload the CPU (or you can remove it if not needed)
-        time.sleep(1)
-
+    # Run the server in a separate thread
+    thread = Thread(target=handle_requests)
+    thread.start()
     
 
 def resample_audio(audio, original_sr, target_sr):

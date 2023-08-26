@@ -70,7 +70,7 @@ def set_all_paths(address, args_string):
     print(f"Inside set_all_paths with address: {address} and args_string: {args_string}")
     global osc_args
 
-    if args[0] == 'stop':
+    if 'stop' in args_string:
         print("Received stop signal. Stopping.")
         exit_event.set()
             
@@ -163,9 +163,11 @@ def run_osc_server(args):
 
         i = 1
         while i <= TIMEOUT and not exit_event.is_set():
-            print("Background thread processing, please wait.")
             time.sleep(1)
             i += 1
+            if i%5==0:
+                print("Background thread processing, please wait.")
+
 
         if i == TIMEOUT + 1:
             print("Timeout occurred. Shutting down.")

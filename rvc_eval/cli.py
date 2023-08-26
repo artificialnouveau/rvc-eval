@@ -86,6 +86,8 @@ def set_all_paths(address, args_string):
         print("Incorrect sequence of arguments received. Expecting input_path, followed by alternating model_path and output_path.")
 
 import select
+import threading
+
 exit_event = threading.Event()
 
 # Function to call when Ctrl+C is pressed

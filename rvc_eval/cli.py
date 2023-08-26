@@ -38,7 +38,7 @@ osc_args = {
     "output_files": []
 }
 
-def set_all_paths(address, args_string, analyze=True):
+def set_all_paths(address, args_string):
     print(f"Inside set_all_paths with address: {address} and args_string: {args_string}")
     global osc_args
     if args_string.startswith("'") and args_string.endswith("'"):
@@ -52,14 +52,14 @@ def set_all_paths(address, args_string, analyze=True):
     output_files = []
     models = []
 
-    try:
-        # The first path is always input
-        input_file = paths[0]
-        if analyze:
-            print('Running speech analysis')
-            analyze_audio(input_file)
-    except IndexError:
-        print("Incorrect sequence of arguments received. Expecting input_path, followed by alternating model_path and output_path.")
+    # try:
+    #     # The first path is always input
+    #     input_file = paths[0]
+    #     if analyze:
+    #         print('Running speech analysis')
+    #         analyze_audio(input_file)
+    # except IndexError:
+    #     print("Incorrect sequence of arguments received. Expecting input_path, followed by alternating model_path and output_path.")
 
     try:
         print('Running voice cloning')
@@ -101,6 +101,8 @@ def handle_requests(server, args):
             try:
                 print("About to call main()...")
                 main(args)
+                print('Running speech analysis')
+                analyze_audio(args.input_file)
                 print("Finished calling main()")
             except Exception as e:
                 print(f"An exception occurred while calling main(): {e}")

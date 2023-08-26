@@ -102,31 +102,7 @@ def run_osc_server(args):
     thread.daemon = True
     thread.start()
 
-    return thread
-    
-
-# def run_osc_server(args):
-#     disp = Dispatcher()
-#     disp.map("/max2py", set_all_paths)  # One OSC address to set all paths
-
-#     server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)
-#     print(f"Serving on {server.server_address}")
-
-#     def handle_requests():
-#         while True:
-#             server.handle_request()
-            
-#             # Run the main function for each model, input, and output path
-#             for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
-#                 args.model = model_path.replace('"', '')
-#                 args.input_file = input_path.replace('"', '')
-#                 args.output_file = output_path.replace('"', '')
-#                 main(args)
-
-#     # Run the server in a separate thread
-#     thread = Thread(target=handle_requests)
-#     thread.start()
-    
+    return thread 
 
 def resample_audio(audio, original_sr, target_sr):
     from math import gcd
@@ -265,7 +241,7 @@ if __name__ == "__main__":
         print("Stopping server...")
         exit_event.set()
         if server_thread is not None:
-            server_thread.join(timeout=5)
+            server_thread.join()
         print("Server stopped.")
 
     else:

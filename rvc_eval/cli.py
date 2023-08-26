@@ -85,29 +85,6 @@ def set_all_paths(address, args_string, analyze=True):
 
 exit_event = Event()  # Event for signaling exit
 
-# def handle_requests(server, args):
-#     print("Inside handle_requests")
-#     try:
-#         while not exit_event.is_set():
-#             print("Waiting for OSC message...")
-#             server.handle_request()
-#             print("Received OSC message.")
-            
-#             for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
-#                 print("Processing main(args)")
-#                 args.model = model_path.replace('"', '')
-#                 args.input_file = input_path.replace('"', '')
-#                 args.output_file = output_path.replace('"', '')
-#             try:
-#                 print("About to call main()...")
-#                 main(args)
-#                 print("Finished calling main()")
-#             except Exception as e:
-#                 print(f"An exception occurred while calling main(): {e}")
-
-#     except KeyboardInterrupt:
-#         exit_event.set()
-#     print("Finished handling request")
 
 def handle_requests(server, args):
     print("Inside handle_requests")
@@ -134,7 +111,7 @@ def handle_requests(server, args):
         exit_event.set()
 
     print("Exiting handle_requests")
-
+    
 
 def run_osc_server(args):
     global server
@@ -147,12 +124,17 @@ def run_osc_server(args):
         print(f"Serving on {server.server_address}")
 
         thread = Thread(target=handle_requests, args=(server, args))
-        thread.daemon = True
+        # thread.daemon = True  # Comment out this line to remove daemon status
         thread.start()
+
+        # Wait for the thread to complete its operation
+        thread.join()  
+
     except Exception as e:
         print(f"An error occurred in run_osc_server: {e}")
 
     print("Exiting run_osc_server")
+
 
 
 def resample_audio(audio, original_sr, target_sr):

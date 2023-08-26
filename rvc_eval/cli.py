@@ -52,15 +52,6 @@ def set_all_paths(address, args_string):
     output_files = []
     models = []
 
-    # try:
-    #     # The first path is always input
-    #     input_file = paths[0]
-    #     if analyze:
-    #         print('Running speech analysis')
-    #         analyze_audio(input_file)
-    # except IndexError:
-    #     print("Incorrect sequence of arguments received. Expecting input_path, followed by alternating model_path and output_path.")
-
     try:
         print('Running voice cloning')
         input_file = paths[0]
@@ -218,9 +209,9 @@ def main(args):
             _mod = args.model
             message = 'output file: '+_out+' with '+_mod+' is done.'
             sender.send_message("/py2max/gen_done", message)
-
-        print('Running speech analysis')
-        analyze_audio(args.input_file)
+        if args.analyze:
+            print('Running speech analysis')
+            analyze_audio(args.input_file)
         
     except Exception as e:
         # If an error occurs, print the error and send an OSC message

@@ -55,7 +55,11 @@ def set_all_paths(address, args_string, analyze=True):  # 'analyze' parameter
         input_file = paths[0]
         if analyze:
             analyze_audio(input_file)
-        
+    except IndexError:
+        print("Incorrect sequence of arguments received. Expecting input_path, followed by alternating model_path and output_path.")
+
+    try:
+        input_file = paths[0]
         # For the remaining paths, order is: model1, output1, model2, output2, ...
         for i in range(1, len(paths)-1, 2):
             models.append(paths[i])

@@ -109,7 +109,7 @@ exit_event = Event()  # Event for signaling exit
 #         exit_event.set()
 #     print("Finished handling request")
 
-﻿﻿def handle_requests(server, args):
+def handle_requests(server, args):
     print("Inside handle_requests")
     try:
         print("Waiting for OSC message...")

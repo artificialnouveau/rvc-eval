@@ -79,8 +79,8 @@ exit_event = Event()  # Event for signaling exit
 
 def handle_requests(server, args):
     print("Inside handle_requests")
-    try:
-        while not exit_event.is_set():  # Keep running until exit_event is set
+    while not exit_event.is_set():  # Keep running until exit_event is set
+        try:
             print("Waiting for OSC message...")
             server.handle_request()  # This blocks until it receives a message
             print("Received OSC message.")
@@ -97,16 +97,11 @@ def handle_requests(server, args):
                 except Exception as e:
                     print(f"An exception occurred while calling main(): {e}")
 
-            osc_args["models"] = []  # Resetting osc_args after processing
-            osc_args["input_files"] = []
-            osc_args["output_files"] = []
-
-    except KeyboardInterrupt:
-        exit_event.set()
+        except KeyboardInterrupt:
+            exit_event.set()
 
     print("Exiting handle_requests")
 
-    
 
 def run_osc_server(args):
     global server
@@ -119,17 +114,15 @@ def run_osc_server(args):
         print(f"Serving on {server.server_address}")
 
         thread = Thread(target=handle_requests, args=(server, args))
-        # thread.daemon = True  # Comment out this line to remove daemon status
         thread.start()
 
         # Wait for the thread to complete its operation
-        thread.join()  
+        thread.join()
 
     except Exception as e:
         print(f"An error occurred in run_osc_server: {e}")
 
     print("Exiting run_osc_server")
-
 
 
 def resample_audio(audio, original_sr, target_sr):
@@ -213,6 +206,7 @@ def main(args):
             _mod = args.model
             message = 'output file: '+_out+' with '+_mod+' is done.'
             sender.send_message("/py2max/gen_done", message)
+            
         if args.analyze:
             print('Running speech analysis')
             analyze_audio(args.input_file)
@@ -251,30 +245,27 @@ parser.add_argument("--buffer-size", type=int, default=1000, help="buffering siz
 parser.add_argument("--analyze", action="store_true", help="Analyze the input audio file.")
 
 
-
 if __name__ == "__main__":
     args = parser.parse_args()
     logger.setLevel(args.log_level)
     server_thread = None
 
-    if args.analyze:
-        if not args.input_file:
-            print("The --input-file option is required for analysis.")
-            sys.exit(1)
-        analyze_audio(args.input_file)
+    # if args.analyze:
+    #     if not args.input_file:
+    #         print("The --input-file option is required for analysis.")
+    #         sys.exit(1)
+    #     analyze_audio(args.input_file)
         
     try:
         if args.use_osc:
-            server_thread = run_osc_server(args)  # Daemon is already set within this function
+            run_osc_server(args)  # Daemon is already set within this function
 
-        while True:  # Keep the main thread alive
+        while not exit_event.is_set():  # Keep the main thread alive until exit_event is set
             time.sleep(1)
     
     except KeyboardInterrupt:
         print("Stopping server...")
         exit_event.set()
-        if server_thread is not None:
-            server_thread.join(timeout=5)
         print("Server stopped.")
 
     else:

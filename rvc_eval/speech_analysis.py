@@ -4,14 +4,16 @@ import json
 def analyze_audio(filename):
     mysp = __import__("my-voice-analysis")
 
-    print("filename: ", filename)
-    file = filename.rsplit('\\',-1)[-1]
+    # Get directory name
+    directory = os.path.dirname(filename)
+    # Get file name
+    file = os.path.basename(filename)
     file = file.replace('.wav','')
-    directory = filename.rsplit('\\',1)[0]+"\\"
+
+    print("filename: ", filename)
     print("file: ", file)
     print("directory: ", directory)
     
-
     model = whisper.load_model("base")
     result = model.transcribe(filename)
     text = result["text"]

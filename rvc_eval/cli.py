@@ -94,33 +94,41 @@ def handle_requests(server, args):
 
     while not exit_event.is_set():  # Keep running until exit_event is set
         try:
-            server.handle_request()  # This blocks until it receives a message or times out
-            print("Received OSC message.")
-            
-            if osc_args["models"] and osc_args["input_files"] and osc_args["output_files"]:  # Check if all required args are set
+            handled = server.handle_request()  # This may return None if it times out
+
+            # If a request was handled, print the message
+            if handled is not None:
+                print("Received OSC message.")
+
+            # Check if all required args are set
+            if osc_args["models"] and osc_args["input_files"] and osc_args["output_files"]:
                 for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
                     args.model = model_path.replace('"', '')
                     args.input_file = input_path.replace('"', '')
                     args.output_file = output_path.replace('"', '')
-                    
+
                     try:
                         print("About to call main()...")
                         main(args)
                         print("Finished calling main()")
-                        
                         # Clearing osc_args to wait for new set of commands
                         osc_args["models"].clear()
                         osc_args["input_files"].clear()
                         osc_args["output_files"].clear()
                     except Exception as e:
                         print(f"An exception occurred while calling main(): {e}")
+
         except socket.timeout:
             continue  # No message received, continue the loop
+        except KeyboardInterrupt:
+            print("KeyboardInterrupt caught in handle_requests.")
+            exit_event.set()
         except Exception as e:
-            print(f"An error occurred: {e}")
+            print(f"An unexpected error occurred: {e}")
             exit_event.set()
 
     print("Exiting handle_requests")
+
 
 
 def run_osc_server(args):

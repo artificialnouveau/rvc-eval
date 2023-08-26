@@ -34,7 +34,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..\\rvc\\"))
 logger = getLogger(__name__)
 
 # Register the signal handler
-signal.signal(signal.SIGINT, signal_handler)
+# signal.signal(signal.SIGINT, signal_handler)
 
 stop_event = Event()  # Declare a global stop event
 exit_event = Event()
@@ -49,6 +49,11 @@ def signal_handler(sig, frame):
     
 def stop_server():
     stop_event.set()  # You can call this function to stop the server
+
+def shutdown_server(unused_addr, *args):
+    global exit_event
+    print("Shutdown command received. Stopping server...")
+    exit_event.set()
     
 osc_args = {
     "models": [],

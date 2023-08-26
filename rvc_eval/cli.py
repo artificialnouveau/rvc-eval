@@ -117,23 +117,23 @@ def handle_requests(server, args):
             server.handle_request()
             print("Received OSC message.")
 
-        # Run the main function for each model, input, and output path
-        for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
-            args.model = model_path.replace('"', '')
-            args.input_file = input_path.replace('"', '')
-            args.output_file = output_path.replace('"', '')
-            main(args)
+            # Run the main function for each model, input, and output path
+            for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
+                args.model = model_path.replace('"', '')
+                args.input_file = input_path.replace('"', '')
+                args.output_file = output_path.replace('"', '')
 
-            try:
-                print("About to call main()...")
-                main(args)
-                print("Finished calling main()")
-            except Exception as e:
-                print(f"An exception occurred while calling main(): {e}")
+                try:
+                    print("About to call main()...")
+                    main(args)
+                    print("Finished calling main()")
+                except Exception as e:
+                    print(f"An exception occurred while calling main(): {e}")
 
     except KeyboardInterrupt:
         exit_event.set()
     print("Finished handling request")
+
 
 def run_osc_server(args):
     global server  # Declare the variable as global to modify it

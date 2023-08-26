@@ -256,8 +256,7 @@ if __name__ == "__main__":
         
     try:
         if args.use_osc:
-            server_thread = run_osc_server(args)
-            server_thread.daemon = True
+            server_thread = run_osc_server(args)  # Daemon is already set within this function
 
         while True:  # Keep the main thread alive
             time.sleep(1)

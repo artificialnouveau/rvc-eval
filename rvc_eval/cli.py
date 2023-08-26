@@ -5,6 +5,7 @@ from pythonosc.dispatcher import Dispatcher
 
 import traceback
 import socket
+import signal
 
 import time
 import os
@@ -34,6 +35,14 @@ logger = getLogger(__name__)
 def print_handler(address, *args):
     print(f"Received message from {address}: {args}")
 
+def signal_handler(sig, frame):
+    print("Stopping server...")
+    exit_event.set()
+    if server_thread is not None:
+        server_thread.join()
+    print("Server stopped.")
+    sys.exit(0)
+    
 osc_args = {
     "models": [],
     "input_files": [],
@@ -82,6 +91,7 @@ exit_event = Event()  # Event for signaling exit
 def handle_requests(server, args):
     print("Inside handle_requests")
     server.socket.settimeout(1)  # Set timeout to 1 second
+    
     while not exit_event.is_set():  # Keep running until exit_event is set
         try:
             print("Waiting for OSC message...")
@@ -105,9 +115,9 @@ def handle_requests(server, args):
                     except Exception as e:
                         print(f"An exception occurred while calling main(): {e}")
         except socket.timeout:
-            print("Socket timeout. Checking exit conditions...")
-        except KeyboardInterrupt:
-            exit_event.set()
+            pass
+        # except KeyboardInterrupt:
+        #     exit_event.set()
 
     print("Exiting handle_requests")
 
@@ -259,12 +269,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     logger.setLevel(args.log_level)
     server_thread = None
-
-    # if args.analyze:
-    #     if not args.input_file:
-    #         print("The --input-file option is required for analysis.")
-    #         sys.exit(1)
-    #     analyze_audio(args.input_file)
+    signal.signal(signal.SIGINT, signal_handler)  # <-- Register the signal handler
         
     try:
         if args.use_osc:
@@ -272,11 +277,13 @@ if __name__ == "__main__":
 
         while not exit_event.is_set():  # Keep the main thread alive until exit_event is set
             time.sleep(1)
-    
-    except KeyboardInterrupt:
-        print("Stopping server...")
-        exit_event.set()
-        print("Server stopped.")
+            
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    # except KeyboardInterrupt:
+    #     print("Stopping server...")
+    #     exit_event.set()
+    #     print("Server stopped.")
 
     else:
         if not args.model or not args.input_file or not args.output_file:

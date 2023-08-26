@@ -82,25 +82,31 @@ def handle_requests(server, args):
     while not exit_event.is_set():  # Keep running until exit_event is set
         try:
             print("Waiting for OSC message...")
-            server.handle_request()  # This blocks until it receives a message
+            server.handle_request(timeout=1)  # This blocks until it receives a message
             print("Received OSC message.")
 
-            for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
-                args.model = model_path.replace('"', '')
-                args.input_file = input_path.replace('"', '')
-                args.output_file = output_path.replace('"', '')
+            if osc_args["models"] and osc_args["input_files"] and osc_args["output_files"]:  # Check if all required args are set
+                for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
+                    args.model = model_path.replace('"', '')
+                    args.input_file = input_path.replace('"', '')
+                    args.output_file = output_path.replace('"', '')
 
-                try:
-                    print("About to call main()...")
-                    main(args)
-                    print("Finished calling main()")
-                except Exception as e:
-                    print(f"An exception occurred while calling main(): {e}")
-
+                    try:
+                        print("About to call main()...")
+                        main(args)
+                        print("Finished calling main()")
+                        # Clearing osc_args to wait for new set of commands
+                        osc_args["models"].clear()
+                        osc_args["input_files"].clear()
+                        osc_args["output_files"].clear()
+                    except Exception as e:
+                        print(f"An exception occurred while calling main(): {e}")
+                    
         except KeyboardInterrupt:
             exit_event.set()
 
     print("Exiting handle_requests")
+
 
 
 def run_osc_server(args):

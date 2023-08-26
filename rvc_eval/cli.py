@@ -80,14 +80,18 @@ exit_event = Event()  # Event for signaling exit
 def handle_requests(server, args):
     try:
         while not exit_event.is_set():
+            print("Waiting for OSC message...")
             server.handle_request()
+            print("Received OSC message.")
             for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
+                print("Processing main(args)")
                 args.model = model_path.replace('"', '')
                 args.input_file = input_path.replace('"', '')
                 args.output_file = output_path.replace('"', '')
                 main(args)
     except KeyboardInterrupt:
         exit_event.set()
+
 
 def run_osc_server(args):
     global server  # Declare the variable as global to modify it

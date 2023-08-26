@@ -1,6 +1,7 @@
 from pythonosc import udp_client
-from pythonosc.dispatcher import Dispatcher
+from pythonosc import dispatcher
 from pythonosc import osc_server
+from pythonosc.dispatcher import Dispatcher
 
 import time
 import os
@@ -10,7 +11,7 @@ from logging import getLogger
 from scipy.io.wavfile import read, write
 from scipy.signal import resample_poly
 
-from threading import Thread
+from threading import Thread, Event
 
 import soundfile as sf
 import numpy as np
@@ -74,16 +75,12 @@ def set_all_paths(address, args_string, analyze=True):  # 'analyze' parameter
         print("Incorrect sequence of arguments received. Expecting input_path, followed by alternating model_path and output_path.")
 
 
-exit_flag = False  # Global flag to control the loop
+exit_event = Event()  # Event for signaling exit
 
-def handle_requests():
-    global exit_flag  # Declare the variable as global to modify it
-    while True:
-        if exit_flag:  # Check the flag to decide whether to exit the thread
-            break
-        server.handle_request()
+def handle_requests(server, args):
+    while not exit_event.is_set():
+        server.handle_request()  # This method is usually blocking
 
-        # Your existing code
         for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
             args.model = model_path.replace('"', '')
             args.input_file = input_path.replace('"', '')
@@ -98,8 +95,11 @@ def run_osc_server(args):
     server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)
     print(f"Serving on {server.server_address}")
 
-    thread = Thread(target=handle_requests)
+    # Run the server in a separate thread
+    thread = Thread(target=handle_requests, args=(server, args))
     thread.start()
+
+    return thread
     
 
 # def run_osc_server(args):
@@ -243,20 +243,24 @@ parser.add_argument("--analyze", action="store_true", help="Analyze the input au
 if __name__ == "__main__":
     args = parser.parse_args()
     logger.setLevel(args.log_level)
+    server_thread = None
 
     if args.analyze:
         if not args.input_file:
             print("The --input-file option is required for analysis.")
             sys.exit(1)
         analyze_audio(args.input_file)
+        
+    try:
+        if args.use_osc:
+            server_thread = run_osc_server(args)  # Start the server thread
+    except KeyboardInterrupt:
+        print("Stopping server...")
+        exit_event.set()  # Signal all threads to exit
+        if server_thread is not None:
+            server_thread.join()  # Wait for the server thread to exit
+        print("Server stopped.")
 
-    if args.use_osc:
-        # run_osc_server(args)
-        try:
-            run_osc_server(args)
-        except KeyboardInterrupt:
-            exit_flag = True  # Update the flag when KeyboardInterrupt (Ctrl+C) is caught
-            print("Exiting...")
     else:
         if not args.model or not args.input_file or not args.output_file:
             print("When not using OSC mode, -m/--model, --input-file, and --output-file are required.")

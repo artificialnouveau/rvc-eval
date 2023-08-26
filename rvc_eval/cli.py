@@ -280,7 +280,6 @@ parser.add_argument("--analyze", action="store_true", help="Analyze the input au
 if __name__ == "__main__":
     args = parser.parse_args()
     logger.setLevel(args.log_level)
-    signal.signal(signal.SIGINT, signal_handler)  # <-- Register the signal handler
     
     try:
         if args.use_osc:

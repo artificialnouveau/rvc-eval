@@ -96,13 +96,6 @@ from threading import Event
 # Declare the event object at a scope where all threads can access it
 exit_event = Event()
 
-def signal_handler(sig, frame):
-    print("You pressed Ctrl+C! Exiting.")
-    exit_event.set()
-
-# Register the signal handler
-signal.signal(signal.SIGINT, signal_handler)
-
 
 def handle_requests(server, args):
     while not exit_event.is_set():  # Keep running until exit_event is set
@@ -136,6 +129,7 @@ def handle_requests(server, args):
             except Exception as e:
                 print(f"An unexpected error occurred: {e}")
     print("Exiting handle_requests")
+
 
 
 def run_osc_server(args):
@@ -298,13 +292,20 @@ if __name__ == "__main__":
         if server:  # Close the server if it exists
             server.server_close()
 
+    except KeyboardInterrupt:  # Catch keyboard interrupts here as well
+        print("Received keyboard interrupt. Exiting.")
+        stop_event.set()
+        
     except Exception as e:
         print(f"An error occurred: {e}")
 
-    else:
-        if not args.model or not args.input_file or not args.output_file:
-            print("When not using OSC mode, -m/--model, --input-file, and --output-file are required.")
-            sys.exit(1)
-        main(args)
+    finally:
+        if server:  # Close the server if it exists
+            server.server_close()
 
-    print("Program terminated gracefully.")  # <-- This will print when you press Ctrl+C
+else:
+    if not args.model or not args.input_file or not args.output_file:
+        print("When not using OSC mode, -m/--model, --input-file, and --output-file are required.")
+        sys.exit(1)
+    main(args)
+

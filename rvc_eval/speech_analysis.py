@@ -20,10 +20,17 @@ def analyze_audio(filename):
     text = result["text"]
     print('text: ', text)
     print('')
-    
-    gender, emotion = mysp.myspgend(file, directory)
-    dataset,number_of_syllables,number_of_pauses,rate_of_speech,articulation_rate,speaking_duration,original_duration,balance,f0_mean,f0_std,f0_median,f0_min,f0_max,f0_quantile25,f0_quan75 = mysp.mysptotal(file, directory)
-    
+
+    try:
+        gender, emotion = mysp.myspgend(file, directory)
+    except:
+        gender = emotion = "Unknown"
+
+    try:
+        dataset,number_of_syllables,number_of_pauses,rate_of_speech,articulation_rate,speaking_duration,original_duration,balance,f0_mean,f0_std,f0_median,f0_min,f0_max,f0_quantile25,f0_quan75 = mysp.mysptotal(file, directory)
+    except:
+        dataset = number_of_syllables = number_of_pauses = rate_of_speech = articulation_rate = speaking_duration = original_duration = balance = f0_mean = f0_std = f0_median = f0_min = f0_max = f0_quantile25 = f0_quan75 = "Unknown"
+        
     data = {
         "filename": filename,
         "text": text,

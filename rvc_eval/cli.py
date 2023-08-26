@@ -250,6 +250,7 @@ def main(args):
             sender.send_message("/py2max/gen_done", message)
 
 
+
 parser = ArgumentParser()
 parser.add_argument("--use-osc", action="store_true", help="Run in OSC mode.")
 parser.add_argument("-m", "--model", type=str, required=False, help="Path to model file")

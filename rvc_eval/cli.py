@@ -82,7 +82,7 @@ def handle_requests(server, args):
     while not exit_event.is_set():  # Keep running until exit_event is set
         try:
             print("Waiting for OSC message...")
-            server.handle_request(timeout=1)  # This blocks until it receives a message
+            server.handle_request()  # This blocks until it receives a message
             print("Received OSC message.")
 
             if osc_args["models"] and osc_args["input_files"] and osc_args["output_files"]:  # Check if all required args are set

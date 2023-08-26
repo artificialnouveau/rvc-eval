@@ -97,8 +97,8 @@ def signal_handler(sig, frame):
 
 # Associate the handler function with Ctrl+C (SIGINT)
 signal.signal(signal.SIGINT, signal_handler)
-
-
+import select
+import socket
 
 def handle_requests(server, args):
     print("Inside handle_requests")
@@ -110,7 +110,8 @@ def handle_requests(server, args):
             try:
                 server.handle_request()
                 print("Received OSC message.")
-
+                print(f"Current osc_args: {osc_args}")  # Debugging line
+                
                 if osc_args["models"] and osc_args["input_files"] and osc_args["output_files"]:  # Check if all required args are set
                     for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
                         args.model = model_path.replace('"', '')

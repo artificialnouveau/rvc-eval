@@ -84,24 +84,29 @@ def set_all_paths(address, args_string):
     except IndexError:
         print("Incorrect sequence of arguments received. Expecting input_path, followed by alternating model_path and output_path.")
 
-import select
-import threading
+stop_event = Event()  # Declare a global stop event
+server = None  # Declare a global server variable
 
-exit_event = threading.Event()
+def stop_server():
+    stop_event.set()  # You can call this function to stop the server
 
-# Function to call when Ctrl+C is pressed
+from threading import Event
+
+# Declare the event object at a scope where all threads can access it
+exit_event = Event()
+
 def signal_handler(sig, frame):
     print("You pressed Ctrl+C! Exiting.")
     exit_event.set()
 
-# Associate the handler function with Ctrl+C (SIGINT)
+# Register the signal handler
 signal.signal(signal.SIGINT, signal_handler)
-import select
-import socket
+
+# Start the OSC server thread
+osc_server_thread = threading.Thread(target=handle_requests, args=(osc_server, args,))
+osc_server_thread.start()
 
 def handle_requests(server, args):
-    print("Inside handle_requests")
-
     while not exit_event.is_set():  # Keep running until exit_event is set
         readable, _, _ = select.select([server.socket], [], [], 1)
         
@@ -127,12 +132,11 @@ def handle_requests(server, args):
                             osc_args["output_files"].clear()
                         except Exception as e:
                             print(f"An exception occurred while calling main(): {e}")
-                            
+
             except socket.error as e:
                 print(f"Socket error: {e}")
             except Exception as e:
                 print(f"An unexpected error occurred: {e}")
-
     print("Exiting handle_requests")
 
 
@@ -155,6 +159,9 @@ def run_osc_server(args):
 
     except Exception as e:
         print(f"An error occurred in run_osc_server: {e}")
+        print("Received keyboard interrupt. Exiting.")
+        exit_event.set()
+        osc_server_thread.join()
 
     print("Exiting run_osc_server")
 
@@ -260,7 +267,6 @@ def main(args):
             sender.send_message("/py2max/gen_done", message)
 
 
-
 parser = ArgumentParser()
 parser.add_argument("--use-osc", action="store_true", help="Run in OSC mode.")
 parser.add_argument("-m", "--model", type=str, required=False, help="Path to model file")
@@ -288,10 +294,10 @@ if __name__ == "__main__":
         if args.use_osc:
             run_osc_server(args)  # Daemon is already set within this function
 
-        while not exit_event.is_set():  # Keep the main thread alive until exit_event is set
+        while not stop_event.is_set():  # Keep the main thread alive
             time.sleep(1)
-        
-        if server:  # <-- Close the server if it exists
+    
+        if server:  # Close the server if it exists
             server.server_close()
 
     except Exception as e:

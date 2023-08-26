@@ -3,6 +3,7 @@ from pythonosc import dispatcher
 from pythonosc import osc_server
 from pythonosc.dispatcher import Dispatcher
 
+import traceback
 import time
 import os
 import sys
@@ -116,10 +117,12 @@ def handle_requests(server, args):
             server.handle_request()
             print("Received OSC message.")
 
-            # Update args with values from osc_args
-            args.model = osc_args["models"]
-            args.input_file = osc_args["input_files"]
-            args.output_file = osc_args["output_files"]
+        # Run the main function for each model, input, and output path
+        for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
+            args.model = model_path.replace('"', '')
+            args.input_file = input_path.replace('"', '')
+            args.output_file = output_path.replace('"', '')
+            main(args)
 
             try:
                 print("About to call main()...")

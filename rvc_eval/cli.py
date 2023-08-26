@@ -16,6 +16,7 @@ from logging import getLogger
 from scipy.io.wavfile import read, write
 from scipy.signal import resample_poly
 
+import threading
 from threading import Thread, Event
 
 import soundfile as sf
@@ -39,6 +40,7 @@ logger = getLogger(__name__)
 stop_event = Event()  # Declare a global stop event
 exit_event = Event()
 server = None  # Declare a global server variable
+TIMEOUT = 10
 
 def print_handler(address, *args):
     print(f"Received message from {address}: {args}")
@@ -48,12 +50,15 @@ def signal_handler(sig, frame):
     exit_event.set()
     
 def stop_server():
-    stop_event.set()  # You can call this function to stop the server
-
-def shutdown_server(unused_addr, *args):
-    global exit_event
-    print("Shutdown command received. Stopping server...")
-    exit_event.set()
+    global server
+    if server:
+        server.shutdown()
+        print("Server stopped.")
+        
+# def shutdown_server(unused_addr, *args):
+#     global exit_event
+#     print("Shutdown command received. Stopping server...")
+#     exit_event.set()
     
 osc_args = {
     "models": [],
@@ -64,6 +69,11 @@ osc_args = {
 def set_all_paths(address, args_string):
     print(f"Inside set_all_paths with address: {address} and args_string: {args_string}")
     global osc_args
+
+    if args[0] == 'stop':
+        print("Received stop signal. Stopping.")
+        exit_event.set()
+            
     if args_string.startswith("'") and args_string.endswith("'"):
         args_string = args_string[1:-1]
     if 'Macintosh HD:' in args_string:
@@ -134,11 +144,11 @@ def handle_requests(server, args):
     print("Exiting handle_requests")
 
 
-
 def run_osc_server(args):
-    global server
+    global server, exit_event
     print("Inside run_osc_server")
-    disp = Dispatcher()
+
+    disp = dispatcher.Dispatcher()
     disp.map("/max2py", set_all_paths)
 
     try:
@@ -149,16 +159,54 @@ def run_osc_server(args):
         thread.daemon = True
         thread.start()
 
-        # Wait for the thread to complete its operation
+        signal.signal(signal.SIGINT, signal_handler)
+
+        i = 1
+        while i <= TIMEOUT and not exit_event.is_set():
+            print("Background thread processing, please wait.")
+            time.sleep(1)
+            i += 1
+
+        if i == TIMEOUT + 1:
+            print("Timeout occurred. Shutting down.")
+        else:
+            print("Exit event triggered. Shutting down.")
+
+        stop_server()
+        exit_event.set()
         thread.join()
 
     except Exception as e:
         print(f"An error occurred in run_osc_server: {e}")
-        print("Received keyboard interrupt. Exiting.")
         exit_event.set()
-        osc_server_thread.join()
+        thread.join()
 
     print("Exiting run_osc_server")
+    
+# def run_osc_server(args):
+#     global server
+#     print("Inside run_osc_server")
+#     disp = Dispatcher()
+#     disp.map("/max2py", set_all_paths)
+
+#     try:
+#         server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)
+#         print(f"Serving on {server.server_address}")
+
+#         thread = Thread(target=handle_requests, args=(server, args))
+#         thread.daemon = True
+#         thread.start()
+
+#         # Wait for the thread to complete its operation
+#         thread.join()
+
+#     except Exception as e:
+#         print(f"An error occurred in run_osc_server: {e}")
+#         print("Received keyboard interrupt. Exiting.")
+#         exit_event.set()
+#         osc_server_thread.join()
+
+#     print("Exiting run_osc_server")
 
 
 def resample_audio(audio, original_sr, target_sr):

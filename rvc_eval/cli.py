@@ -37,7 +37,8 @@ osc_args = {
     "output_files": []
 }
 
-def set_all_paths(address, args_string, analyze=True):  # 'analyze' parameter
+def set_all_paths(address, args_string, analyze=True):
+    print(f"Inside set_all_paths with address: {address} and args_string: {args_string}")
     global osc_args
     if args_string.startswith("'") and args_string.endswith("'"):
         args_string = args_string[1:-1]
@@ -82,6 +83,7 @@ def set_all_paths(address, args_string, analyze=True):  # 'analyze' parameter
 exit_event = Event()  # Event for signaling exit
 
 def handle_requests(server, args):
+    print("Inside handle_requests")
     try:
         while not exit_event.is_set():
             print("Waiting for OSC message...")
@@ -96,6 +98,7 @@ def handle_requests(server, args):
                 main(args)
     except KeyboardInterrupt:
         exit_event.set()
+    print("Finished handling request")
 
 
 def run_osc_server(args):

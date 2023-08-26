@@ -109,30 +109,32 @@ exit_event = Event()  # Event for signaling exit
 #         exit_event.set()
 #     print("Finished handling request")
 
-def handle_requests(server, args):
+﻿﻿def handle_requests(server, args):
     print("Inside handle_requests")
     try:
-        while not exit_event.is_set():
-            print("Waiting for OSC message...")
-            server.handle_request()  # This blocks until it receives a message
-            print("Received OSC message.")
+        print("Waiting for OSC message...")
+        server.handle_request()  # This blocks until it receives a message
+        print("Received OSC message.")
 
-            for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
-                args.model = model_path.replace('"', '')
-                args.input_file = input_path.replace('"', '')
-                args.output_file = output_path.replace('"', '')
+        for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
+            args.model = model_path.replace('"', '')
+            args.input_file = input_path.replace('"', '')
+            args.output_file = output_path.replace('"', '')
 
-                try:
-                    print("About to call main()...")
-                    main(args)
-                    print("Finished calling main()")
-                except Exception as e:
-                    print(f"An exception occurred while calling main(): {e}")
+            try:
+                print("About to call main()...")
+                main(args)
+                print("Finished calling main()")
+            except Exception as e:
+                print(f"An exception occurred while calling main(): {e}")
+
+        exit_event.set()  # Set the exit event, so that the server will terminate
 
     except KeyboardInterrupt:
         exit_event.set()
 
     print("Exiting handle_requests")
+
 
 def run_osc_server(args):
     global server

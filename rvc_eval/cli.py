@@ -101,8 +101,6 @@ def handle_requests(server, args):
             try:
                 print("About to call main()...")
                 main(args)
-                print('Running speech analysis')
-                analyze_audio(args.input_file)
                 print("Finished calling main()")
             except Exception as e:
                 print(f"An exception occurred while calling main(): {e}")
@@ -220,6 +218,9 @@ def main(args):
             _mod = args.model
             message = 'output file: '+_out+' with '+_mod+' is done.'
             sender.send_message("/py2max/gen_done", message)
+
+        print('Running speech analysis')
+        analyze_audio(args.input_file)
         
     except Exception as e:
         # If an error occurs, print the error and send an OSC message

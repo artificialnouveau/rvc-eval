@@ -4,6 +4,8 @@ from pythonosc import osc_server
 from pythonosc.dispatcher import Dispatcher
 
 import traceback
+import socket
+
 import time
 import os
 import sys
@@ -79,6 +81,7 @@ exit_event = Event()  # Event for signaling exit
 
 def handle_requests(server, args):
     print("Inside handle_requests")
+    server._socket.settimeout(1)  # Set timeout to 1 second
     while not exit_event.is_set():  # Keep running until exit_event is set
         try:
             print("Waiting for OSC message...")
@@ -101,7 +104,8 @@ def handle_requests(server, args):
                         osc_args["output_files"].clear()
                     except Exception as e:
                         print(f"An exception occurred while calling main(): {e}")
-                    
+        except socket.timeout:
+            print("Socket timeout. Checking exit conditions...")
         except KeyboardInterrupt:
             exit_event.set()
 

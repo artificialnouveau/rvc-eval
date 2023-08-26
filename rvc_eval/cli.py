@@ -114,10 +114,9 @@ def handle_requests(server, args):
     try:
         while not exit_event.is_set():
             print("Waiting for OSC message...")
-            server.handle_request()
+            server.handle_request()  # This blocks until it receives a message
             print("Received OSC message.")
 
-            # Run the main function for each model, input, and output path
             for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
                 args.model = model_path.replace('"', '')
                 args.input_file = input_path.replace('"', '')
@@ -132,23 +131,27 @@ def handle_requests(server, args):
 
     except KeyboardInterrupt:
         exit_event.set()
-    print("Finished handling request")
 
+    print("Exiting handle_requests")
 
 def run_osc_server(args):
-    global server  # Declare the variable as global to modify it
+    global server
+    print("Inside run_osc_server")
     disp = Dispatcher()
     disp.map("/max2py", set_all_paths)
 
-    server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)
-    print(f"Serving on {server.server_address}")
+    try:
+        server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)
+        print(f"Serving on {server.server_address}")
 
-    # Run the server in a separate thread
-    thread = Thread(target=handle_requests, args=(server, args))
-    thread.daemon = True
-    thread.start()
+        thread = Thread(target=handle_requests, args=(server, args))
+        thread.daemon = True
+        thread.start()
+    except Exception as e:
+        print(f"An error occurred in run_osc_server: {e}")
 
-    return thread 
+    print("Exiting run_osc_server")
+
 
 def resample_audio(audio, original_sr, target_sr):
     from math import gcd

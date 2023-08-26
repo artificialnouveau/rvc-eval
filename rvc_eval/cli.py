@@ -6,6 +6,7 @@ from pythonosc.dispatcher import Dispatcher
 import traceback
 import socket
 import signal
+import select
 
 import time
 import os

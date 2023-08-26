@@ -73,27 +73,52 @@ def set_all_paths(address, args_string, analyze=True):  # 'analyze' parameter
     except IndexError:
         print("Incorrect sequence of arguments received. Expecting input_path, followed by alternating model_path and output_path.")
 
+
+exit_flag = False  # Global flag to control the loop
+
 def run_osc_server(args):
+    global exit_flag  # Declare global variable
     disp = Dispatcher()
-    disp.map("/max2py", set_all_paths)  # One OSC address to set all paths
+    disp.map("/max2py", set_all_paths)
 
     server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)
     print(f"Serving on {server.server_address}")
 
     def handle_requests():
-        while True:
+        global exit_flag  # Declare global variable
+        while not exit_flag:
             server.handle_request()
-            
-            # Run the main function for each model, input, and output path
+
             for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
                 args.model = model_path.replace('"', '')
                 args.input_file = input_path.replace('"', '')
                 args.output_file = output_path.replace('"', '')
                 main(args)
-
-    # Run the server in a separate thread
+                
     thread = Thread(target=handle_requests)
     thread.start()
+
+# def run_osc_server(args):
+#     disp = Dispatcher()
+#     disp.map("/max2py", set_all_paths)  # One OSC address to set all paths
+
+#     server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)
+#     print(f"Serving on {server.server_address}")
+
+#     def handle_requests():
+#         while True:
+#             server.handle_request()
+            
+#             # Run the main function for each model, input, and output path
+#             for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
+#                 args.model = model_path.replace('"', '')
+#                 args.input_file = input_path.replace('"', '')
+#                 args.output_file = output_path.replace('"', '')
+#                 main(args)
+
+#     # Run the server in a separate thread
+#     thread = Thread(target=handle_requests)
+#     thread.start()
     
 
 def resample_audio(audio, original_sr, target_sr):
@@ -222,7 +247,12 @@ if __name__ == "__main__":
         analyze_audio(args.input_file)
 
     if args.use_osc:
-        run_osc_server(args)
+        # run_osc_server(args)
+        try:
+            run_osc_server(args)
+        except KeyboardInterrupt:
+            exit_flag = True  # Update the flag when KeyboardInterrupt (Ctrl+C) is caught
+            print("Exiting...")
     else:
         if not args.model or not args.input_file or not args.output_file:
             print("When not using OSC mode, -m/--model, --input-file, and --output-file are required.")

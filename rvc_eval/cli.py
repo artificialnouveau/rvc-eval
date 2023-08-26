@@ -33,16 +33,22 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..\\rvc\\"))
 
 logger = getLogger(__name__)
 
+# Register the signal handler
+signal.signal(signal.SIGINT, signal_handler)
+
+stop_event = Event()  # Declare a global stop event
+exit_event = Event()
+server = None  # Declare a global server variable
+
 def print_handler(address, *args):
     print(f"Received message from {address}: {args}")
 
 def signal_handler(sig, frame):
     print("Ctrl+C pressed. Stopping server...")
     exit_event.set()
-
-# Register the signal handler
-signal.signal(signal.SIGINT, signal_handler)
-
+    
+def stop_server():
+    stop_event.set()  # You can call this function to stop the server
     
 osc_args = {
     "models": [],
@@ -85,17 +91,9 @@ def set_all_paths(address, args_string):
     except IndexError:
         print("Incorrect sequence of arguments received. Expecting input_path, followed by alternating model_path and output_path.")
 
-stop_event = Event()  # Declare a global stop event
-server = None  # Declare a global server variable
-
-def stop_server():
-    stop_event.set()  # You can call this function to stop the server
-
-from threading import Event
-
-# Declare the event object at a scope where all threads can access it
-exit_event = Event()
-
+    if "shutdown" in args:
+        print("Shutdown command received. Stopping server...")
+        exit_event.set()
 
 def handle_requests(server, args):
     while not exit_event.is_set():  # Keep running until exit_event is set

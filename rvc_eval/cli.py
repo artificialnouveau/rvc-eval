@@ -88,6 +88,14 @@ def set_all_paths(address, args_string):
 
 exit_event = Event()  # Event for signaling exit
 
+# Function to call when Ctrl+C is pressed
+def signal_handler(sig, frame):
+    print("You pressed Ctrl+C! Exiting.")
+    exit_event.set()
+
+# Associate the handler function with Ctrl+C (SIGINT)
+signal.signal(signal.SIGINT, signal_handler)
+
 def handle_requests(server, args):
     print("Inside handle_requests")
     server.socket.settimeout(1)  # Set timeout to 1 second
@@ -96,11 +104,9 @@ def handle_requests(server, args):
         try:
             handled = server.handle_request()  # This may return None if it times out
 
-            # If a request was handled, print the message
             if handled is not None:
                 print("Received OSC message.")
 
-            # Check if all required args are set
             if osc_args["models"] and osc_args["input_files"] and osc_args["output_files"]:
                 for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
                     args.model = model_path.replace('"', '')
@@ -111,7 +117,6 @@ def handle_requests(server, args):
                         print("About to call main()...")
                         main(args)
                         print("Finished calling main()")
-                        # Clearing osc_args to wait for new set of commands
                         osc_args["models"].clear()
                         osc_args["input_files"].clear()
                         osc_args["output_files"].clear()
@@ -120,9 +125,6 @@ def handle_requests(server, args):
 
         except socket.timeout:
             continue  # No message received, continue the loop
-        except KeyboardInterrupt:
-            print("KeyboardInterrupt caught in handle_requests.")
-            exit_event.set()
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
             exit_event.set()

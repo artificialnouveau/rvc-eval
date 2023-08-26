@@ -88,6 +88,7 @@ def handle_requests(server, args):
                 args.model = model_path.replace('"', '')
                 args.input_file = input_path.replace('"', '')
                 args.output_file = output_path.replace('"', '')
+                print(f"Going to call main() with args: {args}")
                 main(args)
     except KeyboardInterrupt:
         exit_event.set()
@@ -120,6 +121,7 @@ def resample_audio(audio, original_sr, target_sr):
 
 
 def main(args):
+    print(f"Inside main() with args: {args}")
     try:
         is_half = not args.float and args.device != "cpu"
         device = torch.device(args.device)

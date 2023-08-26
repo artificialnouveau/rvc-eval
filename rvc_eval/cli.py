@@ -78,14 +78,16 @@ def set_all_paths(address, args_string, analyze=True):  # 'analyze' parameter
 exit_event = Event()  # Event for signaling exit
 
 def handle_requests(server, args):
-    while not exit_event.is_set():
-        server.handle_request()  # This method is usually blocking
-
-        for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
-            args.model = model_path.replace('"', '')
-            args.input_file = input_path.replace('"', '')
-            args.output_file = output_path.replace('"', '')
-            main(args)
+    try:
+        while not exit_event.is_set():
+            server.handle_request()
+            for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
+                args.model = model_path.replace('"', '')
+                args.input_file = input_path.replace('"', '')
+                args.output_file = output_path.replace('"', '')
+                main(args)
+    except KeyboardInterrupt:
+        exit_event.set()
 
 def run_osc_server(args):
     global server  # Declare the variable as global to modify it
@@ -97,6 +99,7 @@ def run_osc_server(args):
 
     # Run the server in a separate thread
     thread = Thread(target=handle_requests, args=(server, args))
+    thread.daemon = True
     thread.start()
 
     return thread

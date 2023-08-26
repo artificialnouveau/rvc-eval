@@ -38,7 +38,6 @@ def print_handler(address, *args):
 def signal_handler(sig, frame):
     print("Ctrl+C pressed. Stopping server...")
     exit_event.set()
-    sys.exit(0)
 
 # Register the signal handler
 signal.signal(signal.SIGINT, signal_handler)
@@ -148,6 +147,7 @@ def run_osc_server(args):
         print(f"Serving on {server.server_address}")
 
         thread = Thread(target=handle_requests, args=(server, args))
+        thread.daemon = True
         thread.start()
 
         # Wait for the thread to complete its operation
@@ -282,22 +282,20 @@ parser.add_argument("--analyze", action="store_true", help="Analyze the input au
 if __name__ == "__main__":
     args = parser.parse_args()
     logger.setLevel(args.log_level)
-    server_thread = None
     signal.signal(signal.SIGINT, signal_handler)  # <-- Register the signal handler
-        
+    
     try:
         if args.use_osc:
             run_osc_server(args)  # Daemon is already set within this function
 
         while not exit_event.is_set():  # Keep the main thread alive until exit_event is set
             time.sleep(1)
-            
+        
+        if server:  # <-- Close the server if it exists
+            server.server_close()
+
     except Exception as e:
         print(f"An error occurred: {e}")
-    # except KeyboardInterrupt:
-    #     print("Stopping server...")
-    #     exit_event.set()
-    #     print("Server stopped.")
 
     else:
         if not args.model or not args.input_file or not args.output_file:
@@ -305,4 +303,4 @@ if __name__ == "__main__":
             sys.exit(1)
         main(args)
 
-
+    print("Program terminated gracefully.")  # <-- This will print when you press Ctrl+C

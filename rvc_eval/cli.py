@@ -245,7 +245,7 @@ if __name__ == "__main__":
         print("Stopping server...")
         exit_event.set()
         if server_thread is not None:
-            server_thread.join()
+            server_thread.join(timeout=5)
         print("Server stopped.")
 
     else:

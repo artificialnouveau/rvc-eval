@@ -76,27 +76,31 @@ def set_all_paths(address, args_string, analyze=True):  # 'analyze' parameter
 
 exit_flag = False  # Global flag to control the loop
 
+def handle_requests():
+    global exit_flag  # Declare the variable as global to modify it
+    while True:
+        if exit_flag:  # Check the flag to decide whether to exit the thread
+            break
+        server.handle_request()
+
+        # Your existing code
+        for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
+            args.model = model_path.replace('"', '')
+            args.input_file = input_path.replace('"', '')
+            args.output_file = output_path.replace('"', '')
+            main(args)
+
 def run_osc_server(args):
-    global exit_flag  # Declare global variable
+    global server  # Declare the variable as global to modify it
     disp = Dispatcher()
     disp.map("/max2py", set_all_paths)
 
     server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)
     print(f"Serving on {server.server_address}")
 
-    def handle_requests():
-        global exit_flag  # Declare global variable
-        while not exit_flag:
-            server.handle_request()
-
-            for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
-                args.model = model_path.replace('"', '')
-                args.input_file = input_path.replace('"', '')
-                args.output_file = output_path.replace('"', '')
-                main(args)
-                
     thread = Thread(target=handle_requests)
     thread.start()
+    
 
 # def run_osc_server(args):
 #     disp = Dispatcher()

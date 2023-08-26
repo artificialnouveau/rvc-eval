@@ -94,8 +94,13 @@ def handle_requests(server, args):
                 args.model = model_path.replace('"', '')
                 args.input_file = input_path.replace('"', '')
                 args.output_file = output_path.replace('"', '')
-                print(f"Going to call main() with args: {args}")
+            try:
+                print("About to call main()...")
                 main(args)
+                print("Finished calling main()")
+            except Exception as e:
+                print(f"An exception occurred while calling main(): {e}")
+
     except KeyboardInterrupt:
         exit_event.set()
     print("Finished handling request")

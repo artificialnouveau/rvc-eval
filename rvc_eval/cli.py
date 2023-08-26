@@ -36,12 +36,13 @@ def print_handler(address, *args):
     print(f"Received message from {address}: {args}")
 
 def signal_handler(sig, frame):
-    print("Stopping server...")
+    print("Ctrl+C pressed. Stopping server...")
     exit_event.set()
-    if server_thread is not None:
-        server_thread.join()
-    print("Server stopped.")
     sys.exit(0)
+
+# Register the signal handler
+signal.signal(signal.SIGINT, signal_handler)
+
     
 osc_args = {
     "models": [],
@@ -87,27 +88,26 @@ def set_all_paths(address, args_string):
 
 exit_event = Event()  # Event for signaling exit
 
-
 def handle_requests(server, args):
     print("Inside handle_requests")
     server.socket.settimeout(1)  # Set timeout to 1 second
-    
+
     while not exit_event.is_set():  # Keep running until exit_event is set
         try:
-            print("Waiting for OSC message...")
-            server.handle_request()  # This blocks until it receives a message
+            server.handle_request()  # This blocks until it receives a message or times out
             print("Received OSC message.")
-
+            
             if osc_args["models"] and osc_args["input_files"] and osc_args["output_files"]:  # Check if all required args are set
                 for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
                     args.model = model_path.replace('"', '')
                     args.input_file = input_path.replace('"', '')
                     args.output_file = output_path.replace('"', '')
-
+                    
                     try:
                         print("About to call main()...")
                         main(args)
                         print("Finished calling main()")
+                        
                         # Clearing osc_args to wait for new set of commands
                         osc_args["models"].clear()
                         osc_args["input_files"].clear()
@@ -115,12 +115,12 @@ def handle_requests(server, args):
                     except Exception as e:
                         print(f"An exception occurred while calling main(): {e}")
         except socket.timeout:
-            pass
-        # except KeyboardInterrupt:
-        #     exit_event.set()
+            continue  # No message received, continue the loop
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            exit_event.set()
 
     print("Exiting handle_requests")
-
 
 
 def run_osc_server(args):

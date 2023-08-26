@@ -256,12 +256,17 @@ if __name__ == "__main__":
         
     try:
         if args.use_osc:
-            server_thread = run_osc_server(args)  # Start the server thread
+            server_thread = run_osc_server(args)
+            server_thread.daemon = True
+
+        while True:  # Keep the main thread alive
+            time.sleep(1)
+    
     except KeyboardInterrupt:
         print("Stopping server...")
-        exit_event.set()  # Signal all threads to exit
+        exit_event.set()
         if server_thread is not None:
-            server_thread.join()  # Wait for the server thread to exit
+            server_thread.join()
         print("Server stopped.")
 
     else:

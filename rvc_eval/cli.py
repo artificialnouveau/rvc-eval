@@ -102,9 +102,6 @@ def signal_handler(sig, frame):
 # Register the signal handler
 signal.signal(signal.SIGINT, signal_handler)
 
-# Start the OSC server thread
-osc_server_thread = threading.Thread(target=handle_requests, args=(osc_server, args,))
-osc_server_thread.start()
 
 def handle_requests(server, args):
     while not exit_event.is_set():  # Keep running until exit_event is set

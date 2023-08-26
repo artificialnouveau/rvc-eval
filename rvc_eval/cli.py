@@ -81,7 +81,7 @@ exit_event = Event()  # Event for signaling exit
 
 def handle_requests(server, args):
     print("Inside handle_requests")
-    server._socket.settimeout(1)  # Set timeout to 1 second
+    server.socket.settimeout(1)  # Set timeout to 1 second
     while not exit_event.is_set():  # Keep running until exit_event is set
         try:
             print("Waiting for OSC message...")

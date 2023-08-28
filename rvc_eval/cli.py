@@ -1,12 +1,6 @@
 from pythonosc import udp_client
-from pythonosc import dispatcher
-from pythonosc import osc_server
 from pythonosc.dispatcher import Dispatcher
-
-import traceback
-import socket
-import signal
-import select
+from pythonosc import osc_server
 
 import time
 import os
@@ -16,8 +10,7 @@ from logging import getLogger
 from scipy.io.wavfile import read, write
 from scipy.signal import resample_poly
 
-import threading
-from threading import Thread, Event
+from threading import Thread
 
 import soundfile as sf
 import numpy as np
@@ -34,46 +27,17 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..\\rvc\\"))
 
 logger = getLogger(__name__)
 
-# Register the signal handler
-# signal.signal(signal.SIGINT, signal_handler)
-
-stop_event = Event()  # Declare a global stop event
-exit_event = Event()
-server = None  # Declare a global server variable
-TIMEOUT = 10
-
 def print_handler(address, *args):
     print(f"Received message from {address}: {args}")
 
-def signal_handler(sig, frame):
-    print("Ctrl+C pressed. Stopping server...")
-    exit_event.set()
-    
-def stop_server():
-    global server
-    if server:
-        server.shutdown()
-        print("Server stopped.")
-        
-# def shutdown_server(unused_addr, *args):
-#     global exit_event
-#     print("Shutdown command received. Stopping server...")
-#     exit_event.set()
-    
 osc_args = {
     "models": [],
     "input_files": [],
     "output_files": []
 }
 
-def set_all_paths(address, args_string):
-    print(f"Inside set_all_paths with address: {address} and args_string: {args_string}")
+def set_all_paths(address, args_string, analyze=False):  # 'analyze' parameter
     global osc_args
-
-    if 'stop' in args_string:
-        print("Received stop signal. Stopping.")
-        exit_event.set()
-            
     if args_string.startswith("'") and args_string.endswith("'"):
         args_string = args_string[1:-1]
     if 'Macintosh HD:' in args_string:
@@ -86,8 +50,11 @@ def set_all_paths(address, args_string):
     models = []
 
     try:
-        print('Running voice cloning')
+        # The first path is always input
         input_file = paths[0]
+        if analyze:
+            analyze_audio(input_file)
+        
         # For the remaining paths, order is: model1, output1, model2, output2, ...
         for i in range(1, len(paths)-1, 2):
             models.append(paths[i])
@@ -106,110 +73,28 @@ def set_all_paths(address, args_string):
     except IndexError:
         print("Incorrect sequence of arguments received. Expecting input_path, followed by alternating model_path and output_path.")
 
-    if "shutdown" in args:
-        print("Shutdown command received. Stopping server...")
-        exit_event.set()
-
-def handle_requests(server, args):
-    while not exit_event.is_set():  # Keep running until exit_event is set
-        readable, _, _ = select.select([server.socket], [], [], 1)
-        
-        if readable:
-            try:
-                server.handle_request()
-                print("Received OSC message.")
-                print(f"Current osc_args: {osc_args}")  # Debugging line
-                
-                if osc_args["models"] and osc_args["input_files"] and osc_args["output_files"]:  # Check if all required args are set
-                    for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
-                        args.model = model_path.replace('"', '')
-                        args.input_file = input_path.replace('"', '')
-                        args.output_file = output_path.replace('"', '')
-
-                        try:
-                            print("About to call main()...")
-                            main(args)
-                            print("Finished calling main()")
-                            # Clearing osc_args to wait for new set of commands
-                            osc_args["models"].clear()
-                            osc_args["input_files"].clear()
-                            osc_args["output_files"].clear()
-                        except Exception as e:
-                            print(f"An exception occurred while calling main(): {e}")
-
-            except socket.error as e:
-                print(f"Socket error: {e}")
-            except Exception as e:
-                print(f"An unexpected error occurred: {e}")
-    print("Exiting handle_requests")
-
-
 def run_osc_server(args):
-    global server, exit_event
-    print("Inside run_osc_server")
+    disp = Dispatcher()
+    disp.map("/max2py", set_all_paths)  # One OSC address to set all paths
 
-    disp = dispatcher.Dispatcher()
-    disp.map("/max2py", set_all_paths)
+    server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)
+    print(f"Serving on {server.server_address}")
 
-    try:
-        server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)
-        print(f"Serving on {server.server_address}")
+    def handle_requests():
+        while True:
+            server.handle_request()
+            
+            # Run the main function for each model, input, and output path
+            for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
+                args.model = model_path.replace('"', '')
+                args.input_file = input_path.replace('"', '')
+                args.output_file = output_path.replace('"', '')
+                main(args)
 
-        thread = Thread(target=handle_requests, args=(server, args))
-        thread.daemon = True
-        thread.start()
-
-        signal.signal(signal.SIGINT, signal_handler)
-
-        i = 1
-        while i <= TIMEOUT and not exit_event.is_set():
-            time.sleep(1)
-            i += 1
-            if i%5==0:
-                print("Background thread processing, please wait.")
-
-
-        if i == TIMEOUT + 1:
-            print("Timeout occurred. Shutting down.")
-        else:
-            print("Exit event triggered. Shutting down.")
-
-        stop_server()
-        exit_event.set()
-        thread.join()
-
-    except Exception as e:
-        print(f"An error occurred in run_osc_server: {e}")
-        exit_event.set()
-        thread.join()
-
-    print("Exiting run_osc_server")
+    # Run the server in a separate thread
+    thread = Thread(target=handle_requests)
+    thread.start()
     
-# def run_osc_server(args):
-#     global server
-#     print("Inside run_osc_server")
-#     disp = Dispatcher()
-#     disp.map("/max2py", set_all_paths)
-
-#     try:
-#         server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)
-#         print(f"Serving on {server.server_address}")
-
-#         thread = Thread(target=handle_requests, args=(server, args))
-#         thread.daemon = True
-#         thread.start()
-
-#         # Wait for the thread to complete its operation
-#         thread.join()
-
-#     except Exception as e:
-#         print(f"An error occurred in run_osc_server: {e}")
-#         print("Received keyboard interrupt. Exiting.")
-#         exit_event.set()
-#         osc_server_thread.join()
-
-#     print("Exiting run_osc_server")
-
 
 def resample_audio(audio, original_sr, target_sr):
     from math import gcd
@@ -223,7 +108,6 @@ def resample_audio(audio, original_sr, target_sr):
 
 
 def main(args):
-    print(f"Inside main() with args: {args}")
     try:
         is_half = not args.float and args.device != "cpu"
         device = torch.device(args.device)
@@ -292,10 +176,6 @@ def main(args):
             _mod = args.model
             message = 'output file: '+_out+' with '+_mod+' is done.'
             sender.send_message("/py2max/gen_done", message)
-            
-        if args.analyze:
-            print('Running speech analysis')
-            analyze_audio(args.input_file)
         
     except Exception as e:
         # If an error occurs, print the error and send an OSC message
@@ -330,34 +210,22 @@ parser.add_argument("--buffer-size", type=int, default=1000, help="buffering siz
 parser.add_argument("--analyze", action="store_true", help="Analyze the input audio file.")
 
 
+
 if __name__ == "__main__":
     args = parser.parse_args()
     logger.setLevel(args.log_level)
-    
-    try:
-        if args.use_osc:
-            run_osc_server(args)  # Daemon is already set within this function
 
-        while not stop_event.is_set():  # Keep the main thread alive
-            time.sleep(1)
-    
-        if server:  # Close the server if it exists
-            server.server_close()
+    if args.analyze:
+        if not args.input_file:
+            print("The --input-file option is required for analysis.")
+            sys.exit(1)
+        analyze_audio(args.input_file)
 
-    except KeyboardInterrupt:  # Catch keyboard interrupts here as well
-        print("Received keyboard interrupt. Exiting.")
-        stop_event.set()
-        
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-    finally:
-        if server:  # Close the server if it exists
-            server.server_close()
-
-else:
-    if not args.model or not args.input_file or not args.output_file:
-        print("When not using OSC mode, -m/--model, --input-file, and --output-file are required.")
-        sys.exit(1)
-    main(args)
+    if args.use_osc:
+        run_osc_server(args)
+    else:
+        if not args.model or not args.input_file or not args.output_file:
+            print("When not using OSC mode, -m/--model, --input-file, and --output-file are required.")
+            sys.exit(1)
+        main(args)
 

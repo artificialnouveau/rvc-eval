@@ -40,8 +40,8 @@ pip install -e .
 
 if pip install requirements fails, do the following
 ```bash
-pip install openai-whisper 
-conda install -c conda-forge numpy=1.24 ffmpeg 
+pip install openai-whisper python-osc
+conda install -c conda-forge numpy=1.24 ffmpeg pyworld
 ```
 
 4. Download the Hubert model (`hubert_base.pt`) from [Hugging Face](https://huggingface.co/lj1995/VoiceConversionWebUI/tree/main) and place it in the `models` directory:
@@ -54,7 +54,15 @@ and save in the directory where you will save audio files for analysis.
 
 Audio files must be in *.wav format, recorded at 44 kHz sample frame and 16 bits of resolution.
 
+If you get an error like this: 
 
+```OMP: Error #15: Initializing libiomp5.dylib, but found libiomp5.dylib already initialized"```
+
+then run this
+
+```
+export KMP_DUPLICATE_LIB_OK=TRUE
+```
 ## Usage
 
 To run the voice conversion system (with the default `hubert_base.pt` model or specify a custom path with the `--hubert` option):

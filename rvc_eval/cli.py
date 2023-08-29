@@ -211,16 +211,17 @@ parser.add_argument("--buffer-size", type=int, default=1000, help="buffering siz
 parser.add_argument("--analyze", action="store_true", help="Analyze the input audio file.")
 
 
-
 if __name__ == "__main__":
     args = parser.parse_args()
     logger.setLevel(args.log_level)
 
     if args.analyze:
-        if not args.input_file:
-            print("The --input-file option is required for analysis.")
+        if not args.input_file and not args.use_osc:
+            print("The --input-file option is required for analysis when not using OSC mode.")
             sys.exit(1)
-        analyze_audio(args.input_file)
+        if args.input_file:
+            json_result = analyze_audio(args.input_file)
+            print(f"Analysis saved in: {json_result}")
 
     if args.use_osc:
         run_osc_server(args)
@@ -229,4 +230,5 @@ if __name__ == "__main__":
             print("When not using OSC mode, -m/--model, --input-file, and --output-file are required.")
             sys.exit(1)
         main(args)
+        
 

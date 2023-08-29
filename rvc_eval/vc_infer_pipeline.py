@@ -125,19 +125,19 @@ class VC(object):
         ).data
 
         return audio1
-
-
+    
+    
     def pipeline(self, model, net_g, sid, audio, f0_up_key, f0_method):
         original_length = len(audio)
         
         # Resample from original rate to 16kHz
         num_samples_16k = int(original_length * 16000 / 44100)
         audio_16k = resample(audio, num_samples_16k)
-
+    
         # Pad the audio
         audio_pad = np.pad(audio_16k, (self.t_pad, self.t_pad), mode="reflect")
         p_len = audio_pad.shape[0] // self.window
-
+    
         # Extract features
         sid = torch.tensor(sid, device=self.device).unsqueeze(0).long()
         pitch, pitchf = self.get_f0(audio_pad, p_len, f0_up_key, f0_method)
@@ -149,24 +149,27 @@ class VC(object):
             device=self.device,
             dtype=torch.float16 if self.is_half else torch.float32,
         ).unsqueeze(0)
-
+    
         # Voice conversion
         vc_output = self.vc(
             model,
             net_g,
             sid,
-            torch.from_numpy(audio_pad),
-            pitch,
-            pitchf,
+            torch.from_numpy(audio_pad).to(self.device),  # Move to the specified device
+            pitch.to(self.device),  # Move to the specified device
+            pitchf.to(self.device),  # Move to the specified device
         )
-
+    
         audio_output = (
             vc_output
             if self.t_pad_tgt == 0
             else vc_output[self.t_pad_tgt : -self.t_pad_tgt]
         )
-
+    
+        # Move audio_output to CPU if necessary
+        audio_output_cpu = audio_output.to("cpu") if self.device.type == "cuda" else audio_output
+        
         # Resample output from 16kHz back to 44.1kHz
-        audio_output_resampled = resample(audio_output.numpy(), original_length)
-
+        audio_output_resampled = resample(audio_output_cpu.numpy(), original_length)
+    
         return audio_output_resampled

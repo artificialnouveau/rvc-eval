@@ -37,7 +37,7 @@ osc_args = {
     "output_files": []
 }
 
-def set_all_paths(address, args_string, analyze=False):  # 'analyze' parameter
+def set_all_paths(address, args_string, analyze=True):  # 'analyze' parameter
     global osc_args
     if args_string.startswith("'") and args_string.endswith("'"):
         args_string = args_string[1:-1]

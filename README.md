@@ -21,19 +21,18 @@ RVC Eval Simplified (rvc-eval) is an appropriate name for this project as it hig
 
 1. Clone this repository:
 ```bash
-git clone -b stable_v2 https://github.com/artificialnouveau/rvc-eval.git
+git clone -b stable_v2 https://github.com/artificialnouveau/rvc-eval.git rvc-eval-v2
 ```
 
 2. Initialize and update the RVC submodule in the `rvc` directory:
 ```bash
-cd rvc-eval
-git submodule update --init --recursive
+cd rvc-eval-v2
 ```
 
 3. Install dependencies using Pip. rvc-eval only runs on python 3.10 so we need to create a separate conda environment
 ```bash
-conda create -n rvc-eval python=3.10 pip
-conda activate rvc-eval
+conda create -n rvc-eval-v2 python=3.10 pip
+conda activate rvc-eval-v2
 pip install git+https://github.com/artificialnouveau/my-voice-analysis
 pip install -e .
 ```

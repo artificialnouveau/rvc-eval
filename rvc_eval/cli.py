@@ -177,7 +177,7 @@ def main(args):
     
         # Send OSC command only if --use-osc argument is provided
         if args.use_osc:
-            print('sending done command to "127.0.0.1", 6666)
+            print('sending done command to "127.0.0.1", 6666')
             # Create a client to send OSC messages, targeting the remote host on port 5005
             sender = udp_client.SimpleUDPClient("127.0.0.1", 6666) #Remote: 192.168.2.110
             _out = args.output_file

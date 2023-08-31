@@ -12,7 +12,7 @@ from rvc_eval.config import Config
 from scipy.signal import resample_poly
 
 class VC(object):
-    def __init__(self, tgt_sr, device, is_half, x_pad):
+    def __init__(self, tgt_sr, device, is_half, x_pad, version):
         config = Config.get(is_half)
         self.x_center = config.x_center
         self.x_max = config.x_max
@@ -28,6 +28,7 @@ class VC(object):
         self.t_max = self.sr * self.x_max  # 免查询时长阈值
         self.device = device
         self.is_half = is_half
+        self.version = version
 
     def _pm(
         self,
@@ -95,19 +96,21 @@ class VC(object):
         audio0: torch.Tensor,
         pitch: torch.Tensor,
         pitchf: torch.Tensor,
+        version
     ):  # ,file_index,file_big_npy
         feats = audio0.half() if self.is_half else audio0.float()
 
         assert feats.dim() == 1, feats.dim()
         feats = feats.view(1, -1)
         padding_mask = torch.BoolTensor(feats.shape).fill_(False).to(self.device)
-
+    
         logits = model.extract_features(
             source=feats.to(self.device),
             padding_mask=padding_mask,
-            output_layer=9,
+            output_layer=9 if version == "v1" else 12,
         )
-        feats = model.final_proj(logits[0])
+        # feats = model.final_proj(logits[0])
+        feats = model.final_proj(logits[0]) if version == "v1" else logits[0]
 
         feats = F.interpolate(feats.permute(0, 2, 1), scale_factor=2).permute(0, 2, 1)
 
@@ -158,6 +161,7 @@ class VC(object):
             torch.from_numpy(audio_pad).to(self.device),  # Move to the specified device
             pitch.to(self.device),  # Move to the specified device
             pitchf.to(self.device),  # Move to the specified device
+            self.version
         )
     
         audio_output = (

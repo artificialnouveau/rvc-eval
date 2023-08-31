@@ -204,7 +204,7 @@ parser.add_argument("--use-osc", action="store_true", help="Run in OSC mode.")
 parser.add_argument("-m", "--model", type=str, required=False, help="Path to model file")
 parser.add_argument("--input-file", type=str, required=False, help="Path to input audio file")
 parser.add_argument("--output-file", type=str, required=False, help="Path to save processed audio file")
-parser.add_argument("--rvc_version", type=str, default="v1", help="Select between RVC v1 and v2")
+parser.add_argument("--rvc_version", type=str, default="v2", help="Select between RVC v1 and v2")
 parser.add_argument("-l", "--log-level", type=str, default="WARNING")
 parser.add_argument(
     "-d", "--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu"

@@ -12,22 +12,29 @@ def analyze_audio(filename):
     file = file.replace('.wav','')
 
     print("filename: ", filename)
-    # file = filename.rsplit('\\',-1)[-1]
-    # directory = filename.rsplit('\\',1)[0]+"\\"
+
     print("file: ", file)
     print("directory: ", directory)
+    
 
-    #Whisper Speech to Text
     model = whisper.load_model("base")
     result = model.transcribe(filename)
     text = result["text"]
     print('text: ', text)
     print('')
 
-    # Speech Analysis
-    gender, emotion = mysp.myspgend(file, directory)
-    dataset,number_of_syllables,number_of_pauses,rate_of_speech,articulation_rate,speaking_duration,original_duration,balance,f0_mean,f0_std,f0_median,f0_min,f0_max,f0_quantile25,f0_quan75 = mysp.mysptotal(file, directory)
-    
+
+    try:
+        gender, emotion = mysp.myspgend(file, directory)
+    except:
+        gender = emotion = "Unknown"
+
+    try:
+        dataset,number_of_syllables,number_of_pauses,rate_of_speech,articulation_rate,speaking_duration,original_duration,balance,f0_mean,f0_std,f0_median,f0_min,f0_max,f0_quantile25,f0_quan75 = mysp.mysptotal(file, directory)
+    except:
+        dataset = number_of_syllables = number_of_pauses = rate_of_speech = articulation_rate = speaking_duration = original_duration = balance = f0_mean = f0_std = f0_median = f0_min = f0_max = f0_quantile25 = f0_quan75 = "Unknown"
+        
+
     data = {
         "filename": filename,
         "text": text,

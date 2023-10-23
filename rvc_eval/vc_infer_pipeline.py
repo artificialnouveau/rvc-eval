@@ -149,45 +149,20 @@ class VC(object):
             ).data
 
         return audio1
-
-
-    def pad_or_trim_tensor(self, tensor, target_length):
-        tensor_length = tensor.shape[-1]
+    
+    
+    def pipeline(self, model, net_g, sid, audio, f0_up_key, f0_method):
+        original_length = len(audio)
         
-        if tensor_length < target_length:
-            padding_size = target_length - tensor_length
-            padded_tensor = F.pad(tensor, (0, padding_size), mode="constant", value=0)
-            return padded_tensor
-        
-        elif tensor_length > target_length:
-            trimmed_tensor = tensor[..., :target_length]
-            return trimmed_tensor
-
-        return tensor
-
-
-
-    def determine_target_length_v2(self, audio_tensor):
-        target_length = audio_tensor.shape[0]
-        return target_length
-
-
-    def adjust_tensor_for_v2(self,audio_tensor, target_length):
-        return F.interpolate(audio_tensor.unsqueeze(0).unsqueeze(0), size=target_length).squeeze(0).squeeze(0)
-
-
-    def pipeline_v1(
-        self,
-        model,
-        net_g,
-        sid,
-        audio,
-        f0_up_key,
-        f0_method,
-    ):
-        audio_pad = np.pad(audio, (self.t_pad, self.t_pad), mode="reflect")
-
+        # Resample from original rate to 16kHz
+        num_samples_16k = int(original_length * 16000 / 44100)
+        audio_16k = resample(audio, num_samples_16k)
+    
+        # Pad the audio
+        audio_pad = np.pad(audio_16k, (self.t_pad, self.t_pad), mode="reflect")
         p_len = audio_pad.shape[0] // self.window
+    
+        # Extract features
 
         sid = torch.tensor(sid, device=self.device).unsqueeze(0).long()
         pitch, pitchf = self.get_f0(audio_pad, p_len, f0_up_key, f0_method)
@@ -199,69 +174,28 @@ class VC(object):
             device=self.device,
             dtype=torch.float16 if self.is_half else torch.float32,
         ).unsqueeze(0)
-
-        vc_output = self.vc(
-            model,
-            net_g,
-            sid,
-            torch.from_numpy(audio_pad),
-            pitch,
-            pitchf,
-        )
-
-        audio_output = (
-            vc_output
-            if self.t_pad_tgt == 0
-            else vc_output[self.t_pad_tgt : -self.t_pad_tgt]
-        )
-
-        return audio_output
-
-
-    def pipeline_v2(self, model, net_g, sid, audio, f0_up_key, f0_method):
-        original_length = len(audio)
-
-        # Resample from original rate to 16kHz
-        num_samples_16k = int(original_length * 16000 / 44100)
-        audio_16k = resample(audio, num_samples_16k)
-
-        # Adjust padding based on model version
-        target_length = len(audio_16k) + 2 * self.t_pad
-        audio_tensor = torch.from_numpy(audio_16k)
-        if len(audio_tensor) < target_length:
-            padding_size = target_length - len(audio_tensor)
-            audio_pad = F.pad(audio_tensor, (padding_size // 2, padding_size - (padding_size // 2)))
-            audio_pad = audio_pad.numpy()
-        else:
-            audio_pad = audio_tensor.numpy()
-
-        p_len = len(audio_pad) // self.window
-
-        # Extract features
-        sid = torch.tensor(sid, device=self.device).unsqueeze(0).long()
-        pitch, pitchf = self.get_f0(audio_pad, p_len, f0_up_key, f0_method)
-        pitch = torch.tensor(pitch[:p_len], device=self.device, dtype=torch.long).unsqueeze(0)
-        pitchf = torch.tensor(
-            pitchf[:p_len],
-            device=self.device,
-            dtype=torch.float16 if self.is_half else torch.float32,
-        ).unsqueeze(0)
-
+   
         # Voice conversion
+
         vc_output = self.vc(
             model,
             net_g,
             sid,
-            torch.from_numpy(audio_pad),
-            pitch,
-            pitchf,
+            torch.from_numpy(audio_pad).to(self.device),  # Move to the specified device
+            pitch.to(self.device),  # Move to the specified device
+            pitchf.to(self.device),  # Move to the specified device
         )
-
-        # Trimming padding from the vc_output if needed
+    
         audio_output = (
             vc_output
             if self.t_pad_tgt == 0
             else vc_output[self.t_pad_tgt : -self.t_pad_tgt]
         )
-
-        return audio_output
+    
+        # Move audio_output to CPU if necessary
+        audio_output_cpu = audio_output.to("cpu") if self.device.type == "cuda" else audio_output
+        
+        # Resample output from 16kHz back to 44.1kHz
+        audio_output_resampled = resample(audio_output_cpu.numpy(), original_length)
+    
+        return audio_output_resampled

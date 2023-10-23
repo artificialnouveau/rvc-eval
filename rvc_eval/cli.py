@@ -1,6 +1,7 @@
 from pythonosc import udp_client
 from pythonosc.dispatcher import Dispatcher
 from pythonosc import osc_server
+import traceback
 
 import time
 import os
@@ -9,6 +10,8 @@ from argparse import ArgumentParser
 from logging import getLogger
 from scipy.io.wavfile import read, write
 from scipy.signal import resample_poly
+from threading import Thread
+
 from threading import Thread
 
 import soundfile as sf
@@ -30,7 +33,8 @@ import whisper
 sys.path.append(os.path.dirname(__file__))
 from speech_analysis import analyze_audio
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "../rvc/"))
+# sys.path.append(os.path.join(os.path.dirname(__file__), "../rvc/"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..\\rvc\\"))
 
 logger = getLogger(__name__)
 
@@ -74,22 +78,17 @@ def set_all_paths(address, args_string, analyze=True):  # 'analyze' parameter
         print("input_files: ", osc_args["input_files"])
         print("output_files: ", osc_args["output_files"])
         print("models: ", osc_args["models"])
-        print('')
-        
 
-        if analyze:
-            analyze_audio(input_file)
-        
+
     except IndexError:
         print("Incorrect sequence of arguments received. Expecting input_path, followed by alternating model_path and output_path.")
 
+    try:
+        if analyze:
+            analyze_audio(input_file)
+    except IndexError:
+        print("Incorrect sequence of arguments received. Expecting input_path, followed by alternating model_path and output_path.")
 
-# def run_osc_server(args):
-#     disp = Dispatcher()
-#     disp.map("/max2py", set_all_paths)  # One OSC address to set all paths
-
-#     server = osc_server.ThreadingOSCUDPServer(("127.0.0.1", 1111), disp)
-#     print(f"Serving on {server.server_address}")
 
 #     while True:
 #         server.handle_request()
@@ -192,7 +191,22 @@ def main(args):
 
                 pbar.update(len(audio_input))
     
-    audio_output_full = np.concatenate(audio_output_chunks)
+
+        # Send OSC command only if --use-osc argument is provided
+        if args.use_osc:
+            print('sending done command to "127.0.0.1", 6666')
+            # Create a client to send OSC messages, targeting the remote host on port 5005
+            sender = udp_client.SimpleUDPClient("127.0.0.1", 6666) #Remote: 192.168.2.110
+            _out = args.output_file
+            _mod = args.model
+            message = 'output file: '+_out+' with '+_mod+' is done.'
+            sender.send_message("/py2max/gen_done", message)
+        
+    except Exception as e:
+        # If an error occurs, print the error and send an OSC message
+        error_message = str(e) + '\n' + traceback.format_exc()
+        print("Error:", error_message)
+
 
     # Save the output
     sf.write(args.output_file, audio_output_full.astype('float32'), 44100)  # Save at 44.1kHz rate
@@ -223,7 +237,6 @@ parser.add_argument("-k", "--f0-up-key", type=int, default=0)
 parser.add_argument("--f0-method", type=str, default="pm", choices=("pm", "harvest"))
 parser.add_argument("--buffer-size", type=int, default=1000, help="buffering size in ms")
 parser.add_argument("--analyze", action="store_true", help="Analyze the input audio file.")
-
 
 
 if __name__ == "__main__":

@@ -12,7 +12,7 @@ from rvc_eval.config import Config
 from scipy.signal import resample_poly
 
 class VC(object):
-    def __init__(self, tgt_sr, device, is_half, x_pad):
+    def __init__(self, tgt_sr, device, is_half, x_pad, version):
         config = Config.get(is_half)
         self.x_center = config.x_center
         self.x_max = config.x_max
@@ -28,6 +28,7 @@ class VC(object):
         self.t_max = self.sr * self.x_max  # 免查询时长阈值
         self.device = device
         self.is_half = is_half
+        self.version = version
 
     def _pm(
         self,
@@ -95,34 +96,57 @@ class VC(object):
         audio0: torch.Tensor,
         pitch: torch.Tensor,
         pitchf: torch.Tensor,
-    ):  # ,file_index,file_big_npy
+    ):
+        # Process the audio tensor
         feats = audio0.half() if self.is_half else audio0.float()
+        
 
         assert feats.dim() == 1, feats.dim()
         feats = feats.view(1, -1)
         padding_mask = torch.BoolTensor(feats.shape).fill_(False).to(self.device)
 
-        logits = model.extract_features(
-            source=feats.to(self.device),
-            padding_mask=padding_mask,
-            output_layer=9,
-        )
-        feats = model.final_proj(logits[0])
+        # Extract features based on model version
+        if self.version == "v1":
+            output_layer = 9
+        elif self.version == "v2":
+            output_layer = 12
+        else:
+            raise ValueError(f"Invalid model version: {self.version}")
 
-        feats = F.interpolate(feats.permute(0, 2, 1), scale_factor=2).permute(0, 2, 1)
+        with torch.no_grad():
+            logits = model.extract_features(
+                source=feats.to(self.device),
+                padding_mask=padding_mask,
+                output_layer=output_layer
+            )
+            feats = model.final_proj(logits[0]) if self.version == "v1" else logits[0]
 
-        assert feats.shape[1] <= audio0.shape[0] // self.window
-        p_len = feats.shape[1]
+        # Handle pitch adjustments
+        if pitch is not None and pitchf is not None:
+            original_feats = feats.clone()
+            feats = F.interpolate(feats.permute(0, 2, 1), scale_factor=2).permute(0, 2, 1)
+            original_feats = F.interpolate(original_feats.permute(0, 2, 1), scale_factor=2).permute(0, 2, 1)
+            
+            p_len = audio0.shape[0] // self.window
+            if feats.shape[1] < p_len:
+                p_len = feats.shape[1]
+                pitch = pitch[:, :p_len]
+                pitchf = pitchf[:, :p_len]
+                
+            pitchff = pitchf.clone()
+            pitchff[pitchf > 0] = 1
+            pitchff[pitchf <= 0] = 0.5  # replace with desired value if needed
+            pitchff = pitchff.unsqueeze(-1)
+            
+            feats = feats * pitchff + original_feats * (1 - pitchff)
+            feats = feats.to(original_feats.dtype)
 
-        audio1 = (
-            net_g.infer(
-                feats,
-                torch.tensor([p_len], device=self.device, dtype=torch.long),
-                pitch[:, :p_len],
-                pitchf[:, :p_len],
-                sid,
-            )[0][0, 0]
-        ).data
+        # Generate audio
+        p_len = torch.tensor([feats.shape[1]], device=self.device).long()
+        with torch.no_grad():
+            audio1 = (
+                net_g.infer(feats, p_len, pitch, pitchf, sid)[0][0, 0]
+            ).data
 
         return audio1
     
@@ -139,6 +163,7 @@ class VC(object):
         p_len = audio_pad.shape[0] // self.window
     
         # Extract features
+
         sid = torch.tensor(sid, device=self.device).unsqueeze(0).long()
         pitch, pitchf = self.get_f0(audio_pad, p_len, f0_up_key, f0_method)
         pitch = torch.tensor(
@@ -149,8 +174,9 @@ class VC(object):
             device=self.device,
             dtype=torch.float16 if self.is_half else torch.float32,
         ).unsqueeze(0)
-    
+   
         # Voice conversion
+
         vc_output = self.vc(
             model,
             net_g,

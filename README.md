@@ -32,10 +32,12 @@ git submodule update --init --recursive
 
 3. Install dependencies using Pip. rvc-eval only runs on python 3.10 so we need to create a separate conda environment
 ```bash
-conda create -n rvc-eval python=3.10 pip
+conda create -n rvc-eval python=3.10 --file requirements.txt
 conda activate rvc-eval
 pip install git+https://github.com/artificialnouveau/my-voice-analysis
+
 pip install -e .
+
 ```
 
 if pip install requirements fails, do the following
@@ -70,7 +72,9 @@ To run the voice conversion system (with the default `hubert_base.pt` model or s
 1. To turn on the OSC receiver
 ```bash
 python -m rvc_eval.cli --use-osc
-python -m rvc_eval.cli
+
+# Do this if you want to use the analyze function (see more information below)
+python -m rvc_eval.cli --use-osc --analyze
 ```
 
 2. If you want to run from the command line:
@@ -78,10 +82,33 @@ python -m rvc_eval.cli
 python -m rvc_eval.cli --model path/to/your/models/models.pth --input-file path/to/your/input.wav --output-file path/to/your/output.wav
 ```
 
-3. If you want to include the speech analysis just add --analyze:
+3. If you want to use RVC v1 or v2 just add --rvcversion:
+If you do not specify the version, by default the rvcversion is "v2"
+```
+python -m rvc_eval.cli --model path/to/your/models/models.pth --input-file path/to/your/input.wav --output-file path/to/your/output.wav --rvcrevsion "v1"
+```
+
+4. If you want to include the speech analysis just add --analyze:
 ```
 python -m rvc_eval.cli --model path/to/your/models/models.pth --input-file path/to/your/input.wav --output-file path/to/your/output.wav --analyze
 ```
+
+## Analyze Function
+The --analyze function allows for the analysis of audio files, primarily focusing on extracting voice features. It combines the capabilities of OpenAI's Whisper ASR model and the my-voice-analysis library to offer insights into voice recordings.
+Features
+
+    Transcribes audio content to text.
+    Provides insights such as:
+        Gender
+        Emotion
+        Number of syllables
+        Number of pauses
+        Rate of speech
+        Articulation rate
+        Speaking duration vs. original duration
+        Fundamental frequency details: mean, std, median, min, max, 25th quantile, and 75th quantile.
+
+All analysis results are saved in a JSON file for easy access and further processing.
 
 ## Recommended Dependencies and Requirements
 - Python: 3.10.x

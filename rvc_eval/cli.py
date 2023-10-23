@@ -10,6 +10,7 @@ from argparse import ArgumentParser
 from logging import getLogger
 from scipy.io.wavfile import read, write
 from scipy.signal import resample_poly
+from threading import Thread
 
 from threading import Thread
 
@@ -17,8 +18,17 @@ import soundfile as sf
 import numpy as np
 import torch
 from tqdm import tqdm
+import traceback
+
+import warnings
+warnings.filterwarnings("ignore")
+
 from rvc_eval.vc_infer_pipeline import VC
+# from rvc_eval.vc2_infer_pipeline import VC2
 from rvc_eval.model import load_hubert, load_net_g
+import json
+import whisper
+
 
 sys.path.append(os.path.dirname(__file__))
 from speech_analysis import analyze_audio
@@ -39,13 +49,13 @@ osc_args = {
 
 def set_all_paths(address, args_string, analyze=True):  # 'analyze' parameter
     global osc_args
+    
     if args_string.startswith("'") and args_string.endswith("'"):
         args_string = args_string[1:-1]
     if 'Macintosh HD:' in args_string:
         args_string = args_string.replace('Macintosh HD:', '')
         
     paths = args_string.split(", ")
-
     input_files = []
     output_files = []
     models = []
@@ -61,7 +71,6 @@ def set_all_paths(address, args_string, analyze=True):  # 'analyze' parameter
 
         # Ensure the input_files list has the same length as models and output_files
         input_files = [input_file] * len(models)
-
         osc_args["input_files"] = input_files
         osc_args["output_files"] = output_files
         osc_args["models"] = models
@@ -69,6 +78,7 @@ def set_all_paths(address, args_string, analyze=True):  # 'analyze' parameter
         print("input_files: ", osc_args["input_files"])
         print("output_files: ", osc_args["output_files"])
         print("models: ", osc_args["models"])
+
 
     except IndexError:
         print("Incorrect sequence of arguments received. Expecting input_path, followed by alternating model_path and output_path.")
@@ -80,6 +90,18 @@ def set_all_paths(address, args_string, analyze=True):  # 'analyze' parameter
         print("Incorrect sequence of arguments received. Expecting input_path, followed by alternating model_path and output_path.")
 
 
+#     while True:
+#         server.handle_request()
+
+#         # Run the main function for each model, input, and output path
+#         for model_path, input_path, output_path in zip(osc_args["models"], osc_args["input_files"], osc_args["output_files"]):
+#             args.model = model_path.replace('"', '')
+#             args.input_file = input_path.replace('"', '')
+#             args.output_file = output_path.replace('"', '')
+#             main(args)
+        
+#         # Optionally add a short sleep to not overload the CPU (or you can remove it if not needed)
+#         time.sleep(1)
 def run_osc_server(args):
     disp = Dispatcher()
     disp.map("/max2py", set_all_paths)  # One OSC address to set all paths
@@ -115,66 +137,61 @@ def resample_audio(audio, original_sr, target_sr):
 
 
 def main(args):
-    try:
-        is_half = not args.float and args.device != "cpu"
-        device = torch.device(args.device)
-        print('Device used: ', device)
-    
-        hubert_model = load_hubert(args.hubert, is_half, device)
-        net_g, sampling_ratio = load_net_g(args.model, is_half, device)
-    
-        repeat = 3 if is_half else 1
-        repeat *= args.quality  # 0 or 3
-        sid = 0
-        f0_up_key = args.f0_up_key
-        f0_method = args.f0_method
-        vc = VC(sampling_ratio, device, is_half, repeat)
-    
-        audio_output_chunks = []
-    
-        with sf.SoundFile(args.input_file, 'r') as f:
-            input_frame_rate = f.samplerate
-            frames_per_buffer = input_frame_rate * args.buffer_size // 1000
-            
-            with tqdm(total=len(f), desc="Processing", unit="sample") as pbar:
-                while True:
-                    audio_input = f.read(frames=frames_per_buffer)
-    
-                    if len(audio_input) == 0:  # End of file
-                        break
-    
-                    if len(audio_input.shape) > 1 and audio_input.shape[1] > 1:
-                        audio_input = np.mean(audio_input, axis=1)
-    
-                    audio_input = audio_input.astype(np.float64)
-    
-                    audio_output = (
-                        vc.pipeline(
-                            hubert_model,
-                            net_g,
-                            sid,
-                            audio_input,
-                            f0_up_key,
-                            f0_method,
-                        )
-                    )
-    
-                    audio_output_chunks.append(audio_output)
-    
-                    if torch.cuda.is_available():
-                        torch.cuda.empty_cache()
-    
-                    if np.isnan(audio_output).any():
-                        continue
-    
-                    pbar.update(len(audio_input))
+    is_half = not args.float and args.device != "cpu"
+    device = torch.device(args.device)
+    print('Device used: ', device)
+
+    hubert_model = load_hubert(args.hubert, is_half, device)
+    net_g, sampling_ratio = load_net_g(args.model, is_half, device)
+
+    repeat = 3 if is_half else 1
+    repeat *= args.quality  # 0 or 3
+    sid = 0
+    f0_up_key = args.f0_up_key
+    f0_method = args.f0_method
+    vc = VC(sampling_ratio, device, is_half, repeat)
+    #vc = VC2(sampling_ratio, device, is_half, repeat)
+
+    audio_output_chunks = []
+
+    with sf.SoundFile(args.input_file, 'r') as f:
+        input_frame_rate = f.samplerate
+        frames_per_buffer = input_frame_rate * args.buffer_size // 1000
         
-        audio_output_full = np.concatenate(audio_output_chunks)
+        with tqdm(total=len(f), desc="Processing", unit="sample") as pbar:
+            while True:
+                audio_input = f.read(frames=frames_per_buffer)
+
+                if len(audio_input) == 0:  # End of file
+                    break
+
+                if len(audio_input.shape) > 1 and audio_input.shape[1] > 1:
+                    audio_input = np.mean(audio_input, axis=1)
+
+                audio_input = audio_input.astype(np.float64)
+
+                audio_output = (
+                    vc.pipeline(
+                        hubert_model,
+                        net_g,
+                        sid,
+                        audio_input,
+                        f0_up_key,
+                        f0_method,
+                    )
+                )
+
+                audio_output_chunks.append(audio_output)
+
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+
+                if np.isnan(audio_output).any():
+                    continue
+
+                pbar.update(len(audio_input))
     
-        # Save the output
-        sf.write(args.output_file, audio_output_full.astype('float32'), 44100)  # Save at 44.1kHz rate
-        print('Done with processing and I have now saved the file here: ', args.output_file)
-    
+
         # Send OSC command only if --use-osc argument is provided
         if args.use_osc:
             print('sending done command to "127.0.0.1", 6666')
@@ -190,15 +207,19 @@ def main(args):
         error_message = str(e) + '\n' + traceback.format_exc()
         print("Error:", error_message)
 
-        # Send an error message via OSC, if --use-osc argument is provided
-        if args.use_osc:
-            # Create a client to send OSC messages, targeting the remote host on port 5005
-            sender = udp_client.SimpleUDPClient("127.0.0.1", 6666) #Remote: 192.168.2.110
-            _out = args.output_file
-            _mod = args.model
-            message = 'output file: '+_out+' with '+_mod+' FAILED.'
-            sender.send_message("/py2max/gen_done", message)
 
+    # Save the output
+    sf.write(args.output_file, audio_output_full.astype('float32'), 44100)  # Save at 44.1kHz rate
+    print('Done with processing and I have now saved the file here: ', args.output_file)
+
+    # Send OSC command only if --use-osc argument is provided
+    if args.use_osc:
+        # Create a client to send OSC messages, targeting the remote host on port 5005
+        sender = udp_client.SimpleUDPClient("127.0.0.1", 6666) #Remote: 192.168.2.110
+        _out = args.output_file
+        _mod = args.model
+        message = 'output file: '+_out+' with '+_mod+' is done.'
+        sender.send_message("/py2max/gen_done", message)
 
 parser = ArgumentParser()
 parser.add_argument("--use-osc", action="store_true", help="Run in OSC mode.")
@@ -237,5 +258,3 @@ if __name__ == "__main__":
             print("When not using OSC mode, -m/--model, --input-file, and --output-file are required.")
             sys.exit(1)
         main(args)
-        
-

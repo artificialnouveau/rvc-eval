@@ -12,14 +12,17 @@ def analyze_audio(filename):
     file = file.replace('.wav','')
 
     print("filename: ", filename)
+
     print("file: ", file)
     print("directory: ", directory)
     
+
     model = whisper.load_model("base")
     result = model.transcribe(filename)
     text = result["text"]
     print('text: ', text)
     print('')
+
 
     try:
         gender, emotion = mysp.myspgend(file, directory)
@@ -31,6 +34,7 @@ def analyze_audio(filename):
     except:
         dataset = number_of_syllables = number_of_pauses = rate_of_speech = articulation_rate = speaking_duration = original_duration = balance = f0_mean = f0_std = f0_median = f0_min = f0_max = f0_quantile25 = f0_quan75 = "Unknown"
         
+
     data = {
         "filename": filename,
         "text": text,
@@ -53,7 +57,8 @@ def analyze_audio(filename):
     }
     
     # Save the data dictionary to a JSON file
-    json_filename = file + "_analysis.json"
+    #json_filename = directory+file+ "_analysis.json"
+    json_filename = os.path.join(directory, file+'_analysis.json')
     with open(json_filename, 'w') as json_file:
         json.dump(data, json_file, indent=4)
 
